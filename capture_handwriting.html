@@ -1,0 +1,3142 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BridgingBipolar — Capture Clinique · Monitoring Bipolaire</title>
+  <style>
+    :root {
+      --bg: #f0f4f9;
+      --surface: #ffffff;
+      --surface2: #f7f9fc;
+      --border: #dde4ef;
+      --text: #111827;
+      --muted: #6b7a94;
+      --accent: #2563eb;
+      --accent-glow: rgba(37,99,235,0.12);
+      --accent-soft: rgba(37,99,235,0.07);
+      --ok: #059669;
+      --ok-soft: rgba(5,150,105,0.08);
+      --warn: #d97706;
+      --warn-soft: rgba(217,119,6,0.08);
+      --alert: #dc2626;
+      --alert-soft: rgba(220,38,38,0.08);
+      --mono: 'Consolas', 'Courier New', monospace;
+      --sans: 'Segoe UI', 'Noto Sans', 'Helvetica Neue', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      font-size: 14px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo-mark {
+      width: 34px; height: 34px;
+      background: var(--accent);
+      border-radius: 9px;
+      display: grid; place-items: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .logo-text { font-size: 1rem; font-weight: 600; letter-spacing: -0.2px; }
+    .logo-sub { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+    .lang-switch {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      background: var(--surface2);
+    }
+
+    .lang-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 5px 10px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .lang-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .badge-live {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--ok-soft);
+      border: 1px solid rgba(5,150,105,0.2);
+      color: var(--ok);
+      border-radius: 999px;
+      padding: 4px 11px;
+      font-size: 0.73rem;
+      font-weight: 600;
+    }
+
+    .dot-pulse {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--ok);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.65); }
+    }
+
+    /* ── LAYOUT ── */
+    .page {
+      display: grid;
+      grid-template-columns: 300px 1fr 340px;
+      min-height: calc(100vh - 63px);
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--border);
+      background: var(--surface);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      overflow-y: auto;
+    }
+
+    .main-col {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--bg);
+      overflow-y: auto;
+    }
+
+    .result-col {
+      border-left: 1px solid var(--border);
+      background: var(--surface);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+    }
+
+    /* ── SECTION LABELS ── */
+    .section-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── PHRASE BANNER — zone cliniquement justifiée ── */
+    .phrase-banner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+    }
+
+    .phrase-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .phrase-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .phrase-badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(37,99,235,0.18);
+      border-radius: 999px;
+      padding: 2px 9px;
+    }
+
+    /* Phrase principale — pangram + phrase de sensibilité */
+    .phrase-primary {
+      font-family: var(--mono);
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.55;
+      letter-spacing: 0.01em;
+      margin-bottom: 6px;
+      user-select: none;
+    }
+
+    .phrase-secondary {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.5;
+      user-select: none;
+      margin-bottom: 8px;
+    }
+
+    .phrase-rationale {
+      font-size: 0.71rem;
+      color: var(--muted);
+      line-height: 1.55;
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .rationale-item {
+      display: flex;
+      gap: 6px;
+      align-items: flex-start;
+    }
+
+    .rationale-key {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--accent);
+      font-weight: 500;
+      min-width: 80px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ── TASK SELECTOR ── */
+    .task-selector {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .task-btn {
+      flex: 1;
+      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--muted);
+      font-size: 0.74rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 120ms;
+      text-align: center;
+      font-family: var(--sans);
+    }
+
+    .task-btn.active {
+      background: var(--accent-soft);
+      border-color: rgba(37,99,235,0.3);
+      color: var(--accent);
+    }
+
+    /* ── FORMS ── */
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    label { font-size: 0.73rem; color: var(--muted); font-weight: 500; }
+
+    input[type="text"], select, textarea {
+      font-family: var(--sans);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 11px;
+      font-size: 0.84rem;
+      color: var(--text);
+      transition: border-color 130ms, box-shadow 130ms;
+      width: 100%;
+    }
+
+    input[type="text"]:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    textarea {
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      line-height: 1.6;
+      resize: vertical;
+      min-height: 180px;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+
+    /* ── SCORES ── */
+    .scores-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+
+    .score-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      text-align: center;
+    }
+
+    .score-name {
+      font-size: 0.65rem;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+    }
+
+    .score-number {
+      font-family: var(--mono);
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1;
+      margin: 5px 0 4px;
+    }
+
+    .score-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .score-bar-fill { height: 100%; border-radius: 2px; transition: width 180ms ease, background 180ms; }
+
+    /* ── SLIDERS ── */
+    .slider-block { display: flex; flex-direction: column; gap: 5px; }
+    .slider-row { display: flex; align-items: center; gap: 9px; }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: var(--accent);
+      height: 4px;
+      cursor: pointer;
+    }
+
+    .slider-val {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--accent);
+      min-width: 26px;
+      text-align: right;
+    }
+
+    .slider-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.63rem;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: var(--radius-sm);
+      padding: 8px 13px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 130ms ease;
+      border: 1px solid transparent;
+      font-family: var(--sans);
+      white-space: nowrap;
+    }
+
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-ghost { background: var(--surface2); color: var(--text); border-color: var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-warn { background: var(--warn-soft); color: var(--warn); border-color: rgba(217,119,6,0.25); }
+    .btn-warn:hover { background: rgba(217,119,6,0.15); }
+    .btn-danger { background: var(--alert-soft); color: var(--alert); border-color: rgba(220,38,38,0.25); }
+    .btn-danger:hover { background: rgba(220,38,38,0.15); }
+    .btn-ok { background: var(--ok-soft); color: var(--ok); border-color: rgba(5,150,105,0.25); }
+    .btn-ok:hover { background: rgba(5,150,105,0.15); }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+
+    /* ── CANVAS ── */
+    .canvas-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 180ms, box-shadow 180ms;
+    }
+
+    .canvas-wrap.drawing {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .canvas-wrap.locked {
+      border-color: var(--ok);
+      box-shadow: 0 0 0 3px var(--ok-soft);
+    }
+
+    .canvas-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+
+    .canvas-task-display {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .canvas-task-display .task-phrase {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .rep-badge {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(37,99,235,0.2);
+      border-radius: 999px;
+      padding: 3px 10px;
+    }
+
+    #mainCanvas {
+      width: 100%;
+      height: 400px;
+      display: block;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .canvas-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      border-top: 1px solid var(--border);
+      background: var(--surface2);
+    }
+
+    /* ── PILLS ── */
+    .pill {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      border-radius: 999px;
+      padding: 3px 10px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--muted);
+    }
+
+    .pill.accent { border-color: rgba(37,99,235,0.3); background: var(--accent-soft); color: var(--accent); }
+    .pill.ok { border-color: rgba(5,150,105,0.3); background: var(--ok-soft); color: var(--ok); }
+    .pill.warn { border-color: rgba(217,119,6,0.3); background: var(--warn-soft); color: var(--warn); }
+    .pill.alert { border-color: rgba(220,38,38,0.3); background: var(--alert-soft); color: var(--alert); }
+
+    /* ── MINI VISUALS ── */
+    .mini-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .mini-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+    }
+
+    .mini-card-title {
+      font-size: 0.65rem;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      margin-bottom: 7px;
+    }
+
+    .mini-canvas { width: 100%; height: 90px; display: block; border-radius: 5px; background: #fff; }
+
+    /* ── QC BARS ── */
+    .qc-bar-group { display: flex; flex-direction: column; gap: 4px; margin-top: 7px; }
+
+    .qc-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.67rem;
+      color: var(--muted);
+    }
+
+    .qc-bar-label { width: 60px; flex-shrink: 0; font-family: var(--mono); }
+
+    .qc-bar-bg {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .qc-bar-fill { height: 100%; border-radius: 2px; transition: width 350ms ease, background 350ms; }
+    .qc-val { width: 30px; text-align: right; font-family: var(--mono); font-size: 0.65rem; }
+
+    /* ── PRESSURE BADGE ── */
+    .pressure-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.71rem;
+      padding: 4px 9px;
+      border-radius: var(--radius-sm);
+      border: 1px solid;
+    }
+
+    .pressure-badge.fallback {
+      background: var(--warn-soft);
+      border-color: rgba(217,119,6,0.25);
+      color: var(--warn);
+    }
+
+    .pressure-badge.real {
+      background: var(--ok-soft);
+      border-color: rgba(5,150,105,0.25);
+      color: var(--ok);
+    }
+
+    /* ── REP HISTORY ── */
+    .rep-history { display: flex; flex-direction: column; gap: 4px; }
+
+    .rep-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 9px;
+      border-radius: var(--radius-sm);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      font-size: 0.75rem;
+      transition: border-color 130ms;
+    }
+
+    .rep-item:hover { border-color: var(--accent); }
+
+    .rep-num { font-family: var(--mono); font-weight: 600; color: var(--accent); min-width: 20px; }
+    .rep-task { font-size: 0.66rem; color: var(--muted); font-family: var(--mono); flex: 1; }
+    .rep-stats { color: var(--muted); font-family: var(--mono); font-size: 0.67rem; }
+    .rep-conf { margin-left: auto; }
+
+    /* ── STATUS BAR ── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 11px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.77rem;
+    }
+
+    /* ── RESULT PANEL ── */
+    .result-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--muted);
+      text-align: center;
+      min-height: 180px;
+    }
+
+    .result-icon { font-size: 2.2rem; opacity: 0.25; }
+
+    .result-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .result-header {
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .result-decision { font-size: 1rem; font-weight: 700; }
+    .result-decision.ok { color: var(--ok); }
+    .result-decision.warn { color: var(--warn); }
+    .result-decision.alert { color: var(--alert); }
+
+    .result-body { padding: 12px 15px; display: flex; flex-direction: column; gap: 9px; }
+
+    .metric-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
+    .metric-label { color: var(--muted); }
+    .metric-val { font-family: var(--mono); font-weight: 500; }
+
+    .score-gauge-bg {
+      height: 7px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+      margin: 3px 0 7px;
+    }
+
+    .score-gauge-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 550ms cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    .score-gauge-marker {
+      position: absolute;
+      top: -2px;
+      width: 2px;
+      height: 11px;
+      background: var(--warn);
+      border-radius: 1px;
+      transition: left 550ms ease;
+    }
+
+    /* ── SEP ── */
+    .sep { height: 1px; background: var(--border); }
+
+    /* ── JSON AREA ── */
+    .json-section { display: flex; flex-direction: column; gap: 8px; }
+
+    /* ── CLINICAL NOTE ── */
+    .clinical-note {
+      font-size: 0.69rem;
+      color: var(--muted);
+      line-height: 1.55;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 9px 11px;
+    }
+
+    .clinical-note strong { color: var(--text); font-weight: 600; }
+
+    .voice-panel {
+      margin-top: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .voice-q-label {
+      font-size: 0.71rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .voice-q-current {
+      font-size: 0.76rem;
+      font-family: var(--mono);
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 7px 9px;
+      color: var(--text);
+      min-height: 40px;
+    }
+
+    .questionnaire-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: grid;
+      place-items: center;
+    }
+
+    .questionnaire-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(17, 24, 39, 0.35);
+      backdrop-filter: blur(2px);
+    }
+
+    .questionnaire-panel {
+      position: relative;
+      width: min(780px, calc(100vw - 24px));
+      max-height: calc(100vh - 28px);
+      overflow: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .questionnaire-header,
+    .questionnaire-footer {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .questionnaire-footer {
+      border-bottom: none;
+      border-top: 1px solid var(--border);
+    }
+
+    .questionnaire-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .questionnaire-progress {
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-family: var(--mono);
+      margin-top: 2px;
+    }
+
+    .questionnaire-body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .questionnaire-question-label {
+      font-size: 0.92rem;
+      font-weight: 600;
+      line-height: 1.45;
+    }
+
+    .questionnaire-question-meta {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    .questionnaire-scale-values {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .questionnaire-scale-btn {
+      min-width: 34px;
+      text-align: center;
+      padding: 6px 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+    }
+
+    .questionnaire-scale-btn.active {
+      background: var(--accent-soft);
+      border-color: rgba(37,99,235,0.35);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .questionnaire-answer-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .questionnaire-answer-row input {
+      width: 110px;
+      text-align: center;
+    }
+
+    .questionnaire-error {
+      font-size: 0.73rem;
+      color: var(--alert);
+      background: var(--alert-soft);
+      border: 1px solid rgba(220,38,38,0.2);
+      border-radius: var(--radius-sm);
+      padding: 7px 9px;
+    }
+
+    .questionnaire-summary {
+      font-size: 0.75rem;
+      color: var(--text);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      line-height: 1.5;
+      font-family: var(--mono);
+    }
+
+    .questionnaire-mic {
+      border-color: var(--border);
+      color: var(--muted);
+      background: var(--surface2);
+    }
+
+    .questionnaire-mic.active {
+      color: #fff;
+      border-color: var(--alert);
+      background: var(--alert);
+      animation: micPulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes micPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.35); }
+      50% { box-shadow: 0 0 0 8px rgba(220,38,38,0); }
+    }
+
+    .privacy-badge {
+      display: none;
+      margin-top: 8px;
+      font-size: 0.72rem;
+      color: var(--warn);
+      border: 1px solid rgba(217,119,6,0.35);
+      background: var(--warn-soft);
+      border-radius: 999px;
+      padding: 3px 10px;
+      width: fit-content;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1200px) {
+      .page { grid-template-columns: 280px 1fr; }
+      .result-col { display: none; }
+    }
+
+    @media (max-width: 900px) {
+      .page { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+
+    @media (max-width: 640px) {
+      .mini-row { grid-template-columns: 1fr; }
+      .grid-2, .scores-row { grid-template-columns: 1fr; }
+    }
+  
+    /* ── Dashboard alertes ─────────────────────────────────────── */
+    #dashboardPanel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-top: 1rem;
+      display: none;
+    }
+    #dashboardPanel.visible { display: block; }
+    #dashboardPanel h4 { margin: 0 0 0.75rem; font-size: 0.9rem; color: var(--accent); }
+    .alert-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 8px; border-radius: 6px; margin-bottom: 4px;
+      background: var(--bg); border: 1px solid var(--border);
+      font-size: 0.78rem;
+    }
+    .alert-row .dir-manic  { color: #D85A30; font-weight: 600; }
+    .alert-row .dir-depres { color: #378ADD; font-weight: 600; }
+    .alert-row .dir-stable { color: var(--ok); font-weight: 600; }
+    #dashboardBtn {
+      font-size: 0.78rem; padding: 5px 12px; border-radius: 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); cursor: pointer; margin-top: 0.5rem;
+      transition: background 0.2s;
+    }
+    #dashboardBtn:hover { background: var(--accent); color: #fff; }
+    #locksBadge {
+      display: inline-block; font-size: 0.7rem; padding: 2px 7px;
+      border-radius: 999px; background: var(--surface);
+      border: 1px solid var(--border); margin-left: 6px;
+    }
+    </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">🧠</div>
+  <div>
+    <div class="logo-text">BridgingBipolar</div>
+    <div class="logo-sub">Capture clinique — Analyse cinématique de l'écriture · Lettre <em>l</em> cursive</div>
+  </div>
+  <div class="header-right">
+    <div class="lang-switch" aria-label="Language selector">
+      <button id="langBtnFr" class="lang-btn active" type="button">FR</button>
+      <button id="langBtnEn" class="lang-btn" type="button">EN</button>
+      <button id="langBtnAr" class="lang-btn" type="button">عربي</button>
+    </div>
+    <div class="badge-live"><div class="dot-pulse"></div> Capture active</div>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- ══ SIDEBAR GAUCHE ══ -->
+  <aside class="sidebar">
+
+    <!-- Identification -->
+    <div>
+      <div class="section-label">Identification session</div>
+
+      <div class="field" style="margin-bottom:9px">
+        <label for="patientId">Patient ID</label>
+        <input id="patientId" type="text" list="patientSuggestions" placeholder="Ex: P001" />
+        <datalist id="patientSuggestions">
+          <option value="P001"></option><option value="P002"></option><option value="P003"></option>
+        </datalist>
+        <div style="font-size:0.68rem;color:var(--muted);margin-top:3px">Patients notebook : P001 · P002 · P003 (10 baseline + 20 monitoring chacun)</div>
+      </div>
+
+      <div class="field" style="margin-bottom:9px">
+        <label for="sessionId">Session ID (auto-généré)</label>
+        <input id="sessionId" type="text" readonly style="font-family:var(--mono);font-size:0.74rem;color:var(--muted)" />
+      </div>
+
+      <div class="grid-2" style="margin-bottom:9px">
+        <div class="field">
+          <label for="phase">Phase</label>
+          <select id="phase">
+            <option value="onboarding">onboarding</option>
+            <option value="baseline">baseline</option>
+            <option value="monitoring">monitoring</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="condition">Condition proxy <span style="font-family:var(--mono);font-size:0.62rem;color:var(--muted)">(notebook §2)</span></label>
+          <select id="condition">
+            <option value="stable">stable — éuthymie</option>
+            <option value="fast">fast — manie (dt×0.60)</option>
+            <option value="slow">slow — dépression (dt×2.20)</option>
+            <option value="fatigue">fatigue — dysfluence (dt×1.60)</option>
+            <option value="mixed">mixed — épisode mixte (dt×0.80)</option>
+            <option value="noisy">noisy — bruit capture (dt×1.00)</option>
+            <option value="bad_capture">bad_capture — défaillance matériel</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="targetReps">Répétitions cibles</label>
+        <input id="targetReps" type="number" min="1" max="10" value="3" style="width:80px;text-align:center" />
+      </div>
+
+      <div style="margin-top:8px">
+        <span id="sendRouteBadge" class="pill accent">Destination API: Scoring API (/score)</span>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <!-- Scores cliniques -->
+    <div>
+      <div class="section-label">Scores cliniques</div>
+
+      <div class="scores-row" style="margin-bottom:11px">
+        <div class="score-card">
+          <div class="score-name">YMRS</div>
+          <div id="ymrsDisplay" class="score-number">0</div>
+          <div class="score-bar-bg">
+            <div id="ymrsBar" class="score-bar-fill" style="width:0%;background:var(--ok)"></div>
+          </div>
+        </div>
+        <div class="score-card">
+          <div class="score-name">MADRS</div>
+          <div id="madrsDisplay" class="score-number">0</div>
+          <div class="score-bar-bg">
+            <div id="madrsBar" class="score-bar-fill" style="width:0%;background:var(--ok)"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slider-block" style="margin-bottom:9px">
+        <label for="ymrs">YMRS — Manie <span style="font-family:var(--mono);font-size:0.65rem">(0 = aucun · 60 = sévère)</span></label>
+        <div class="slider-row">
+          <input id="ymrs" type="range" min="0" max="60" step="1" value="0" />
+          <span class="slider-val" id="ymrsVal">0</span>
+        </div>
+        <div class="slider-ticks"><span>0</span><span>15</span><span>30</span><span>45</span><span>60</span></div>
+      </div>
+
+      <div class="slider-block">
+        <label for="madrs">MADRS — Dépression <span style="font-family:var(--mono);font-size:0.65rem">(0 = aucun · 60 = sévère)</span></label>
+        <div class="slider-row">
+          <input id="madrs" type="range" min="0" max="60" step="1" value="0" />
+          <span class="slider-val" id="madrsVal">0</span>
+        </div>
+        <div class="slider-ticks"><span>0</span><span>15</span><span>30</span><span>45</span><span>60</span></div>
+      </div>
+
+      <!-- Note sur les questionnaires -->
+      <div class="clinical-note" style="margin-top:10px">
+        <strong>Onboarding / Baseline</strong> : YMRS + MADRS complets (sessions 1 &amp; 5).<br>
+        <strong>Sessions intermédiaires</strong> : ASRM + PHQ-9 screening rapide (≤ 5 min).<br>
+        <strong>Monitoring</strong> : questionnaire complet si alerte, drift CUSUM ou point périodique.<br>
+        <span style="font-family:var(--mono);font-size:0.65rem;color:var(--accent)">QC gate notebook : conf ≥ 0.65 · MIN_LOOPS ≥ 18 · MIN_PATH ≥ 400 px</span>
+      </div>
+
+      <div class="voice-panel">
+        <div class="field">
+          <label for="questionnaireLang">Langue questionnaire vocal</label>
+          <select id="questionnaireLang">
+            <option value="fr">Français</option>
+            <option value="en">English</option>
+            <option value="ar">العربية</option>
+          </select>
+        </div>
+        <div id="voiceQuestionCurrent" class="voice-q-current">Questionnaire en attente d'un déclenchement clinique par le backend.</div>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <!-- Historique répétitions -->
+    <div>
+      <div class="section-label">Répétitions capturées</div>
+      <div id="repHistory" class="rep-history">
+        <div style="font-size:0.74rem;color:var(--muted);text-align:center;padding:10px 0">Aucune répétition enregistrée</div>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <!-- Info notebook BridgingBipolar -->
+    <div>
+      <div class="section-label">Notebook BridgingBipolar</div>
+      <div style="font-size:0.69rem;color:var(--muted);line-height:1.7;font-family:var(--mono)">
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text)">Seed</span><span>42</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text)">Patients</span><span>P001 · P002 · P003</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text)">Sessions</span><span>30 baseline · 60 monitoring</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text)">Features</span><span>23 cinématiques</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text)">Modèle §6</span><span>IF / LOF / AE</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text)">QC gate</span><span>≥ 0.65</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text)">Min boucles</span><span>≥ 18 / 25</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text)">Min points</span><span>≥ 80 pts</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text)">Min path</span><span>≥ 400 px</span></div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ══ COLONNE CENTRALE ══ -->
+  <main class="main-col">
+
+    <!-- ── PHRASE JUSTIFIÉE ── -->
+    <div class="phrase-banner">
+      <div class="phrase-header">
+        <div class="phrase-label">Tâche d'écriture standardisée</div>
+        <div class="phrase-badge">Cliniquement justifié</div>
+      </div>
+
+      <!-- Sélecteur de tâche -->
+      <div class="task-selector">
+        <button class="task-btn active" id="taskBtnLetterL" onclick="selectTask('letter_l')">T1 — Lettre l cursive (25 boucles)</button>
+
+      </div>
+
+      <!-- Affichage dynamique de la phrase -->
+      <div id="phraseDisplay">
+        <!-- Injecté par JS -->
+      </div>
+
+      <!-- Lecture à voix haute de la consigne -->
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+        <button id="ttsReadTaskBtn" class="btn btn-ghost" onclick="ttsReadTask()" style="display:flex;align-items:center;gap:6px;font-size:0.78rem">
+          🔊 <span id="ttsReadTaskLabel">Lecture à voix haute</span>
+        </button>
+        <span id="ttsReadTaskStatus" style="font-size:0.72rem;color:var(--muted)"></span>
+      </div>
+
+      <!-- Justification clinique de la phrase -->
+      <div class="phrase-rationale" id="phraseRationale">
+        <!-- Injecté par JS -->
+      </div>
+    </div>
+
+    <!-- ── CANVAS ── -->
+    <div>
+      <div class="canvas-wrap" id="canvasContainer">
+        <div class="canvas-header">
+          <div class="canvas-task-display" id="canvasInstruction">
+            <span class="task-phrase" id="canvasPhrase">lllllllllllllllllllllllll</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="lockedBadge" class="pill ok" style="display:none">🔒 Verrouillé</span>
+            <span id="repBadge" class="rep-badge">Rép. 1 / 3</span>
+          </div>
+        </div>
+
+        <canvas id="mainCanvas" width="1200" height="450"></canvas>
+
+        <div class="canvas-footer">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span id="pointCounter" class="pill">Points : 0</span>
+            <span id="durationPill" class="pill">Durée : —</span>
+            <span id="pressurePill" class="pill">Pression : —</span>
+            <span id="pressureFallbackBadge" class="pressure-badge fallback" style="display:none">⚠ Pression fallback 0.5</span>
+            <span id="pressureRealBadge" class="pressure-badge real" style="display:none">✓ Stylet natif</span>
+          </div>
+          <div id="loopTimerDisplay" style="display:none;font-family:var(--mono);font-size:1.1rem;font-weight:600;color:var(--accent);min-width:170px;text-align:center">Boucles: 0/25</div>
+        </div>
+      </div>
+
+      <!-- ── VOICE CONTROL SESSION ── -->
+      <div class="phrase-banner" style="margin-top:10px;margin-bottom:6px;padding:10px 14px">
+        <div class="phrase-header" style="margin-bottom:8px">
+          <div class="phrase-label">🎤 Contrôle vocal session</div>
+          <div class="phrase-badge" id="voiceSessionBadge">Inactif</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:9px;font-size:0.71rem;color:var(--muted)">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center"><strong style="color:var(--text)">1</strong> — Valider rép.</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center"><strong style="color:var(--text)">2</strong> — Effacer rép.</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center"><strong style="color:var(--text)">3</strong> — Terminer session</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center"><strong style="color:var(--text)">4</strong> — Lire consigne</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center"><strong style="color:var(--text)">5</strong> — Réinitialiser</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center"><strong style="color:var(--text)">6</strong> — Envoyer pipeline</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <button id="voiceSessionHoldBtn" class="btn btn-primary" style="font-size:0.76rem;padding:6px 12px"
+            onmousedown="voiceSessionStart()" onmouseup="voiceSessionStop()"
+            ontouchstart="voiceSessionStart(event)" ontouchend="voiceSessionStop()">
+            🎤 Maintenir
+          </button>
+          <button id="voiceSessionToggleBtn" class="btn btn-ghost" onclick="voiceSessionToggle()" style="font-size:0.76rem;padding:6px 12px">
+            🔁 Mode continu
+          </button>
+          <span id="voiceSessionLastHeard" style="font-size:0.71rem;color:var(--muted);font-family:var(--mono)">—</span>
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-top:10px">
+        <button id="newRepBtn" class="btn btn-primary">＋ Valider répétition</button>
+        <button id="clearRepBtn" class="btn btn-warn">↺ Effacer</button>
+        <button id="finishBtn" class="btn btn-ok">✓ Terminer la session</button>
+        <button id="resetBtn" class="btn btn-ghost">↩ Nouvelle session</button>
+      </div>
+    </div>
+
+    <!-- ── MINI VISUALS ── -->
+    <div class="mini-row">
+      <div class="mini-card">
+        <div class="mini-card-title">Trajectoire — répétition en cours</div>
+        <canvas id="miniTrajectory" class="mini-canvas" width="600" height="110"></canvas>
+        <div style="margin-bottom:8px">
+          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:4px">Complétude estimée de la phrase</div>
+          <div class="qc-bar-bg">
+            <div id="phraseProgressBar" class="qc-bar-fill" style="width:0%;background:var(--alert)"></div>
+          </div>
+          <div id="phraseProgressText" style="font-size:0.69rem;color:var(--muted);margin-top:3px">— tracé en cours</div>
+        </div>
+        <div class="qc-bar-group" id="qcBarsA"></div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-title">Profil de vitesse — répétition en cours</div>
+        <canvas id="miniSpeed" class="mini-canvas" width="600" height="110"></canvas>
+        <div id="qcLastText" style="margin-top:6px;font-size:0.69rem;color:var(--muted);font-family:var(--mono)">Dernière répétition validée : —</div>
+      </div>
+    </div>
+
+    <!-- ── EXPORT ── -->
+    <div class="json-section">
+      <div class="section-label">Contrôle session &amp; export</div>
+
+      <div id="statusBar" class="status-bar">
+        <span id="statusIcon">🟢</span>
+        <span id="statusText">Session ouverte — prêt à capturer</span>
+      </div>
+
+      <div class="btn-row">
+        <button id="copyBtn" class="btn btn-ghost">📋 Copier JSON</button>
+        <button id="downloadBtn" class="btn btn-ghost">⬇ Télécharger .json</button>
+        <button id="sendBtn" class="btn btn-danger">⚡ Envoyer au pipeline</button>
+      </div>
+
+      <textarea id="jsonOutput" readonly placeholder="Le JSON de session apparaîtra ici après la capture..."></textarea>
+    </div>
+
+  </main>
+
+  <!-- ══ COLONNE DROITE — RÉSULTAT ══ -->
+  <aside class="result-col">
+    <div class="section-label">Résultat pipeline</div>
+
+    <!-- ── Dashboard alertes ───────────────────────────────────────────── -->
+    <div style="margin:0.6rem 0 0.4rem;">
+      <button id="dashboardBtn" onclick="loadDashboard()">
+        📊 Vue alertes clinicien
+        <span id="locksBadge" style="font-size:0.7rem;padding:2px 7px;border-radius:999px;background:var(--surface);border:1px solid var(--border);margin-left:6px;">locks: ?</span>
+      </button>
+    </div>
+    <div id="dashboardPanel" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:0.75rem;display:none;">
+      <h4 style="margin:0 0 0.75rem;font-size:0.9rem;color:var(--accent);">🚨 Alertes actives — 7 derniers jours</h4>
+      <div id="dashboardContent">Chargement...</div>
+    </div>
+
+    <div id="resultArea">
+      <div class="result-empty">
+        <div class="result-icon">🧠</div>
+        <div style="font-size:0.82rem">En attente d'analyse</div>
+        <div style="font-size:0.72rem">Terminez et envoyez la session au pipeline</div>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <!-- Note méthodo justificative -->
+    <div class="clinical-note">
+      <strong>Score d'anomalie</strong> : distance intra-patient entre la session courante et la baseline personnelle (modèle sélectionné par benchmark §6 : IF / LOF / AE).<br><br>
+      <strong>Seuil</strong> : bootstrap percentile 97.5–99 × 1.05, calibré sur les sessions stables du patient (notebook §8 — 4 méthodes comparées).<br><br>
+      <strong>Alerte</strong> : déclenchée après 2 sessions consécutives au-dessus du seuil <em>et</em> QC_GATE ≥ 0.65 (règle de persistance anti-faux-positifs — notebook §9).<br><br>
+      <strong>Direction (DRE)</strong> : mania vs dépression via z-scores cinématiques sans labels YMRS/MADRS (notebook §15b).
+    </div>
+
+  </aside>
+
+</div>
+
+<div id="questionnaireModal" class="questionnaire-modal" style="display:none" aria-hidden="true">
+  <div class="questionnaire-backdrop" id="questionnaireBackdrop"></div>
+  <div class="questionnaire-panel" id="questionnairePanel" role="dialog" aria-modal="true" aria-labelledby="questionnaireTitle" dir="ltr">
+    <div class="questionnaire-header">
+      <div>
+        <div id="questionnaireTitle" class="questionnaire-title">Questionnaires cliniques</div>
+        <div id="questionnaireProgress" class="questionnaire-progress">Question 1 / 21</div>
+      </div>
+      <button id="questionnaireCloseBtn" class="btn btn-ghost">✕</button>
+    </div>
+
+    <div class="questionnaire-body">
+      <div id="questionnaireQuestionLabel" class="questionnaire-question-label">—</div>
+      <div id="questionnaireQuestionMeta" class="questionnaire-question-meta">—</div>
+
+      <div id="questionnaireScaleValues" class="questionnaire-scale-values"></div>
+
+      <div class="questionnaire-answer-row">
+        <label for="questionnaireAnswerInput" id="questionnaireAnswerLabel">Valeur</label>
+        <input id="questionnaireAnswerInput" type="number" min="0" max="8" step="1" />
+      </div>
+
+      <div class="btn-row">
+        <button id="questionnaireMicBtn" class="btn btn-ghost questionnaire-mic">🎤 Micro</button>
+        <button id="questionnaireReplayBtn" class="btn btn-ghost">↻ Relire</button>
+      </div>
+      <div id="micPrivacyBadge" class="privacy-badge">⚠️ Environnement privé recommandé</div>
+
+      <div id="questionnaireError" class="questionnaire-error" style="display:none"></div>
+      <div id="questionnaireSummary" class="questionnaire-summary" style="display:none"></div>
+    </div>
+
+    <div class="questionnaire-footer">
+      <button id="questionnairePrevBtn" class="btn btn-ghost">← Précédent</button>
+      <button id="questionnaireNextBtn" class="btn btn-primary">Suivant →</button>
+      <button id="questionnaireValidateBtn" class="btn btn-ok" disabled>✓ Valider</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+
+  // ══════════════════════════════════════════════════════════════════
+  // BRIDGINGBIPOLAR — Capture Clinique
+  // Constantes synchronisées avec le notebook (Section 1 & Section 9)
+  //
+  // Références notebook :
+  //   MIN_POINTS_PER_REP_STRICT = 80
+  //   MIN_PATH_PER_REP          = 400.0
+  //   TARGET_LOOPS_PER_REP      = 25
+  //   MIN_VALID_LOOPS_PER_REP   = 18
+  //   QC_GATE                   = 0.65
+  //   GLOBAL_SEED               = 42
+  //   LOOPS_WARMUP              = 0
+  //
+  // Protocole T1 (Ibañez-Molina 2019 · Caligiuri 2009 · Ayaz 2022) :
+  //   Lettre l cursive répétée — 25 boucles comptées · 3 répétitions
+  //   Signal moteur pur, sans charge cognitive, indépendant de la langue.
+  //
+  // Patients notebook : P001 · P002 · P003
+  //   10 sessions baseline (stable) + 20 sessions monitoring
+  //   Conditions : stable/fast/slow/fatigue/mixed/noisy/bad_capture
+  // ══════════════════════════════════════════════════════════════════
+
+  // Seuils synchronisés avec notebook Section 1 — source de vérité unique
+  // QC constants (synchronisé avec app.py ET notebook §1)
+  // - MIN_POINTS_PER_REP_STRICT = 80
+  // - MIN_PATH_PER_REP = 400 px
+  // - MIN_VALID_LOOPS_PER_REP = 18  ← notebook §1
+  // - TARGET_LOOPS_PER_REP = 25     ← notebook §1
+  // - QC_GATE = 0.65                ← notebook §9
+  // - LOOPS_WARMUP = 0              ← notebook §1
+  // Synchronisé avec app.py — ne pas modifier indépendamment.
+  const TRANSLATIONS = {
+    fr: {
+      taskSelectorPangram: 'T2 — Pangram (complément)',
+      taskSelectorLetter: 'T1 — Lettre l cursive (25 boucles)',
+      writingTaskLabel: 'Tâche d\'écriture standardisée',
+      phraseSubtitle: '3 répétitions recommandées · écriture cursive naturelle',
+      letterSubtitle: '3 répétitions · 25 boucles comptées',
+      letterInstructionPrimary: 'Faites 25 lettres l cursives',
+      letterInstructionSecondary: 'Validez la répétition après atteindre ~25 boucles comptées',
+      micPrivate: '⚠️ Environnement privé recommandé',
+      speechUnrecognized: 'Non reconnu — veuillez sélectionner manuellement',
+      langUpdated: 'Langue de l\'interface mise à jour',
+      micLocked: 'Micro désactivé pendant la tâche d\'écriture. Terminez et verrouillez la session.',
+      captureDone: 'Capture continue terminée — vous pouvez finaliser la session',
+      repRecorded: 'Répétition #{n} enregistrée — prête pour la suivante',
+      canvasEmpty: 'Aucun point capturé — écrivez d\'abord sur le canvas',
+      inProgress: 'Capture en cours...',
+      waitingQuestionnaire: 'Questionnaire en attente d\'un déclenchement clinique par le backend.',
+      badgeLive: 'Capture active',
+      taskSwitchLocked: 'Changement de tâche verrouillé: terminez ou réinitialisez la session en cours.',
+    },
+    en: {
+      taskSelectorPangram: 'T2 — Pangram (complement)',
+      taskSelectorLetter: 'T1 — Cursive letter l (25 loops)',
+      writingTaskLabel: 'Standardized writing task',
+      phraseSubtitle: '3 repetitions recommended · natural cursive writing',
+      letterSubtitle: '3 repetitions · 25 counted loops',
+      letterInstructionPrimary: 'Do 25 counted cursive l loops',
+      letterInstructionSecondary: 'Validate the repetition after reaching about 25 counted loops',
+      micPrivate: '⚠️ Private environment recommended',
+      speechUnrecognized: 'Not recognized — please select manually',
+      langUpdated: 'Interface language updated',
+      micLocked: 'Microphone disabled during writing task. Finish and lock session first.',
+      captureDone: 'Continuous capture finished — you can finalize the session',
+      repRecorded: 'Repetition #{n} saved — ready for next one',
+      canvasEmpty: 'No points captured — write first on canvas',
+      inProgress: 'Capture in progress...',
+      waitingQuestionnaire: 'Questionnaire waiting for backend clinical trigger.',
+      badgeLive: 'Live capture',
+      taskSwitchLocked: 'Task switching is locked: finish or reset the current session first.',
+    },
+    ar: {
+      taskSelectorPangram: 'المهمة 2 — بانغرام (تكميلي)',
+      taskSelectorLetter: 'المهمة 1 — حرف l متصل (25 حلقة)',
+      writingTaskLabel: 'مهمة كتابة معيارية',
+      phraseSubtitle: '3 تكرارات موصى بها · كتابة متصلة طبيعية',
+      letterSubtitle: '3 تكرارات · 25 حلقة محتسبة',
+      letterInstructionPrimary: 'قم بـ25 حلقة حرف l محتسبة',
+      letterInstructionSecondary: 'اعتمد التكرار بعد الوصول إلى نحو 25 حلقة محتسبة',
+      micPrivate: '⚠️ يوصى ببيئة خاصة',
+      speechUnrecognized: 'لم يتم التعرف — يرجى الاختيار يدويًا',
+      langUpdated: 'تم تحديث لغة الواجهة',
+      micLocked: 'الميكروفون معطل أثناء الكتابة. أنهِ الجلسة وأقفلها أولاً.',
+      captureDone: 'اكتمل التسجيل المتواصل — يمكنك إنهاء الجلسة',
+      repRecorded: 'تم حفظ التكرار #{n} — جاهز للتكرار التالي',
+      canvasEmpty: 'لا توجد نقاط مسجلة — اكتب أولًا على اللوحة',
+      inProgress: 'التسجيل قيد التنفيذ...',
+      waitingQuestionnaire: 'الاستبيان في انتظار تفعيل سريري من الخادم.',
+      badgeLive: 'التقاط مباشر',
+      taskSwitchLocked: 'تغيير المهمة مقفول: أنهِ الجلسة الحالية أو أعد ضبطها أولاً.',
+    },
+  };
+
+  const PHRASE_TARGET = "Portez ce vieux whisky au juge blond qui fume.";
+  const MIN_PATH_PER_REP = 400;
+  const MIN_DURATION_PER_REP = 1500;
+  const MIN_POINTS_PER_REP = 80;
+  // ── Protocole : 1 répétition par session (baseline ET monitoring) ──────────
+  const MIN_REPS_REQUIRED = 1;
+  const WARMUP_LOOPS = 0;
+  const TARGET_COUNTED_LOOPS = 25;
+
+  // ── Protocole baseline ─────────────────────────────────────────────────────
+  // Session 1 : YMRS complet + MADRS complet  (onboarding clinique)
+  // Session 2 : ASRM court   + PHQ-9 court
+  // Session 3 : ASRM court   + PHQ-9 court  → fit du modèle
+  // Monitoring : aucun questionnaire · déviation J1 → revenir le lendemain
+  //              déviation J2 (consécutive) → DRE + YMRS+MADRS complet
+  const BASELINE_REQUIRED_SESSIONS = 3;
+
+  const QC_THRESHOLDS = {
+    pangram: {
+      MIN_PATH: 400,
+      MIN_DURATION: 1500,
+      MIN_POINTS: 80,
+    },
+    letter_l: {
+      MIN_PATH: 400,      // MIN_PATH_PER_REP notebook §1
+      MIN_DURATION: 0,
+      MIN_POINTS: 80,     // MIN_POINTS_PER_REP_STRICT notebook §1
+      MIN_LOOPS: 18,      // MIN_VALID_LOOPS_PER_REP notebook §1
+    },
+  };
+
+  const TASKS = {
+    letter_l: {
+      id: 'letter_l',
+      phrase: 'lllllllllllllllllllllllll',
+      task_type: 'letter_l',
+      label: 'Lettre l répétitive',
+      isContinuousTask: true,
+      requiredReps: 1,        // 1 répétition par session (baseline et monitoring)
+      warmupLoops: WARMUP_LOOPS,
+      targetCountedLoops: TARGET_COUNTED_LOOPS,
+      rationale: [
+        { key: 'Justification', val: 'Tâche T1 prioritaire (notebook §2) — Ibañez-Molina 2019 · Caligiuri 2009 · Ayaz 2022. Isole la cinématique motrice fine sans charge cognitive.' },
+        { key: 'Micrographie', val: 'Mesure la réduction progressive de taille via size_decay_slope (pente négative attendue en micrographie — condition slow).' },
+        { key: 'Protocole', val: '1 répétition · 25 boucles comptées · LOOPS_WARMUP=0 · MIN_VALID_LOOPS≥18 · QC_GATE≥0.65 (synchronisé notebook §1).' },
+        { key: 'Features', val: '23 features extraites : temporelles, cinématiques, géométriques, pression, complexité non-linéaire (notebook §3).' },
+      ]
+    },
+    pangram: {
+      id: 'pangram',
+      phrase: PHRASE_TARGET,
+      phraseMultilang: {
+        fr: 'Portez ce vieux whisky au juge blond qui fume.',
+        en: 'Pack my box with five dozen liquor jugs.',
+        ar: 'صِفْ خَلْفَ سُورٍ قَصِيرٍ جُمْلَةً طَوِيلَةً.',
+      },
+      task_type: 'pangram',
+      label: 'Pangram',
+      isContinuousTask: false,
+      requiredReps: 1,
+      rationale: [
+        { key: 'Rôle', val: 'Tâche T2 complémentaire (notebook §2) — capture coordination graphomotrice, pauses inter-mots et charge linguistique minimale.' },
+        { key: 'Usage', val: 'Utilisée après T1 pour enrichir le profil intra-patient. Non utilisée dans le benchmark principal (§6).' },
+      ]
+    }
+  };
+
+  function applyProtocolConfig(config) {
+    if (!config || typeof config !== 'object') return;
+    const qc = config.qc || {};
+    const tasks = config.tasks || {};
+
+    if (QC_THRESHOLDS.pangram) {
+      QC_THRESHOLDS.pangram.MIN_PATH = Number(qc.min_path_per_rep ?? QC_THRESHOLDS.pangram.MIN_PATH);
+      QC_THRESHOLDS.pangram.MIN_DURATION = Number(qc.min_duration_per_rep_ms ?? QC_THRESHOLDS.pangram.MIN_DURATION);
+      QC_THRESHOLDS.pangram.MIN_POINTS = Number(qc.min_points_per_rep_strict ?? QC_THRESHOLDS.pangram.MIN_POINTS);
+    }
+    if (QC_THRESHOLDS.letter_l) {
+      QC_THRESHOLDS.letter_l.MIN_PATH = Number(qc.min_path_per_rep ?? QC_THRESHOLDS.letter_l.MIN_PATH);
+      QC_THRESHOLDS.letter_l.MIN_DURATION = 0;
+      QC_THRESHOLDS.letter_l.MIN_POINTS = Number(qc.min_points_per_rep_strict ?? QC_THRESHOLDS.letter_l.MIN_POINTS);
+      QC_THRESHOLDS.letter_l.MIN_LOOPS = Number(qc.min_loops_per_rep ?? QC_THRESHOLDS.letter_l.MIN_LOOPS);
+    }
+
+    if (tasks.letter_l && TASKS.letter_l) {
+      TASKS.letter_l.requiredReps = Number(tasks.letter_l.required_reps ?? 1);
+      TASKS.letter_l.warmupLoops = Number(tasks.letter_l.warmup_loops ?? TASKS.letter_l.warmupLoops);
+      TASKS.letter_l.targetCountedLoops = Number(tasks.letter_l.target_counted_loops ?? TASKS.letter_l.targetCountedLoops);
+    }
+    if (tasks.pangram && TASKS.pangram) {
+      TASKS.pangram.requiredReps = Number(tasks.pangram.required_reps ?? 1);
+    }
+  }
+
+  const QUESTIONNAIRE_LANGUAGE_META = {
+    fr: {
+      speech: 'fr-FR',
+      dir: 'ltr',
+      ask: 'Question',
+      max: 'Maximum',
+      title: 'Questionnaires cliniques',
+      waiting: 'Questionnaire en attente d\'un déclenchement clinique par le backend.',
+      replay: '↻ Relire',
+      mic: '🎤 Micro',
+      prev: '← Précédent',
+      next: 'Suivant →',
+      validate: '✓ Valider',
+      close: '✕',
+      value: 'Valeur',
+      fillAll: 'Toutes les réponses sont obligatoires avant validation.',
+      noSpeech: 'Reconnaissance vocale non supportée sur ce navigateur',
+      parseFail: 'Réponse non reconnue, saisissez une valeur ou dictez un chiffre.',
+      submitted: 'Questionnaires validés et envoyés au backend.',
+      submitFail: 'Échec d\'envoi questionnaire',
+      sectionYmrs: 'YMRS',
+      sectionMadrs: 'MADRS',
+    },
+    en: {
+      speech: 'en-US',
+      dir: 'ltr',
+      ask: 'Question',
+      max: 'Maximum',
+      title: 'Clinical questionnaires',
+      waiting: 'Questionnaire waiting for backend clinical trigger.',
+      replay: '↻ Replay',
+      mic: '🎤 Microphone',
+      prev: '← Previous',
+      next: 'Next →',
+      validate: '✓ Validate',
+      close: '✕',
+      value: 'Value',
+      fillAll: 'All answers are required before validation.',
+      noSpeech: 'Speech recognition is not supported in this browser',
+      parseFail: 'Unrecognized answer, type a value or dictate a number.',
+      submitted: 'Questionnaires validated and sent to backend.',
+      submitFail: 'Failed to submit questionnaire',
+      sectionYmrs: 'YMRS',
+      sectionMadrs: 'MADRS',
+    },
+    ar: {
+      speech: 'ar-SA',
+      dir: 'rtl',
+      ask: 'سؤال',
+      max: 'الحد الأقصى',
+      title: 'الاستبيانات السريرية',
+      waiting: 'الاستبيان في انتظار تفعيل سريري من الخادم.',
+      replay: '↻ إعادة القراءة',
+      mic: '🎤 ميكروفون',
+      prev: '← السابق',
+      next: 'التالي →',
+      validate: '✓ اعتماد',
+      close: '✕',
+      value: 'القيمة',
+      fillAll: 'جميع الإجابات مطلوبة قبل الاعتماد.',
+      noSpeech: 'التعرف الصوتي غير مدعوم في هذا المتصفح',
+      parseFail: 'تعذر فهم الإجابة، أدخل قيمة رقمية أو انطق رقما.',
+      submitted: 'تم اعتماد الاستبيانات وإرسالها إلى الخادم.',
+      submitFail: 'فشل إرسال الاستبيان',
+      sectionYmrs: 'YMRS',
+      sectionMadrs: 'MADRS',
+    },
+  };
+
+  const FALLBACK_QUESTIONNAIRES = {
+    scales: {
+      ymrs: {
+        items: [
+          { id: 'elevated_mood', max_score: 4, label: { fr: 'Humeur élevée', en: 'Elevated mood', ar: 'مزاج مرتفع' } },
+          { id: 'increased_motor_activity', max_score: 4, label: { fr: 'Activité motrice augmentée', en: 'Increased motor activity', ar: 'زيادة النشاط الحركي' } },
+          { id: 'sexual_interest', max_score: 4, label: { fr: 'Intérêt sexuel', en: 'Sexual interest', ar: 'الاهتمام الجنسي' } },
+          { id: 'sleep', max_score: 4, label: { fr: 'Sommeil', en: 'Sleep', ar: 'النوم' } },
+          { id: 'irritability', max_score: 8, label: { fr: 'Irritabilité', en: 'Irritability', ar: 'التهيج' } },
+          { id: 'speech', max_score: 8, label: { fr: 'Débit de parole', en: 'Speech rate/amount', ar: 'سرعة الكلام' } },
+          { id: 'language_thought_disorder', max_score: 4, label: { fr: 'Trouble langage-pensée', en: 'Language-thought disorder', ar: 'اضطراب اللغة/التفكير' } },
+          { id: 'content', max_score: 8, label: { fr: 'Contenu de pensée', en: 'Thought content', ar: 'محتوى التفكير' } },
+          { id: 'disruptive_aggressive_behavior', max_score: 8, label: { fr: 'Comportement agressif', en: 'Disruptive/aggressive behavior', ar: 'سلوك عدواني' } },
+          { id: 'appearance', max_score: 4, label: { fr: 'Apparence', en: 'Appearance', ar: 'المظهر' } },
+          { id: 'insight', max_score: 4, label: { fr: 'Insight', en: 'Insight', ar: 'الاستبصار' } },
+        ],
+      },
+      madrs: {
+        items: [
+          { id: 'apparent_sadness', max_score: 6, label: { fr: 'Tristesse apparente', en: 'Apparent sadness', ar: 'الحزن الظاهر' } },
+          { id: 'reported_sadness', max_score: 6, label: { fr: 'Tristesse exprimée', en: 'Reported sadness', ar: 'الحزن المصرح به' } },
+          { id: 'inner_tension', max_score: 6, label: { fr: 'Tension intérieure', en: 'Inner tension', ar: 'التوتر الداخلي' } },
+          { id: 'reduced_sleep', max_score: 6, label: { fr: 'Réduction du sommeil', en: 'Reduced sleep', ar: 'انخفاض النوم' } },
+          { id: 'reduced_appetite', max_score: 6, label: { fr: 'Réduction de l\'appétit', en: 'Reduced appetite', ar: 'انخفاض الشهية' } },
+          { id: 'concentration_difficulties', max_score: 6, label: { fr: 'Difficultés de concentration', en: 'Concentration difficulties', ar: 'صعوبات التركيز' } },
+          { id: 'lassitude', max_score: 6, label: { fr: 'Lassitude', en: 'Lassitude', ar: 'الخمول' } },
+          { id: 'inability_to_feel', max_score: 6, label: { fr: 'Incapacité à ressentir', en: 'Inability to feel', ar: 'عدم القدرة على الإحساس' } },
+          { id: 'pessimistic_thoughts', max_score: 6, label: { fr: 'Pensées pessimistes', en: 'Pessimistic thoughts', ar: 'أفكار تشاؤمية' } },
+          { id: 'suicidal_thoughts', max_score: 6, label: { fr: 'Pensées suicidaires', en: 'Suicidal thoughts', ar: 'أفكار انتحارية' } },
+        ],
+      },
+    },
+  };
+
+  let currentTaskId = 'letter_l';
+  let questionnaireCatalog = null;
+  let questionnaireFlow = [];
+  let questionnaireCursor = -1;
+  let questionnaireAnswers = {};
+  let recognition = null;
+  let isListening = false;
+  let loopTimer = null;
+  let loopStartTime = null;
+
+  function estimateLoopCount(rep) {
+    if (!rep || rep.length < 12) return 0;
+    const ys = rep.map(p => Number(p.y));
+    const smooth = ys.map((_, i) => {
+      const from = Math.max(0, i - 2);
+      const to = Math.min(ys.length - 1, i + 2);
+      let s = 0;
+      for (let j = from; j <= to; j++) s += ys[j];
+      return s / (to - from + 1);
+    });
+    const dy = [];
+    for (let i = 1; i < smooth.length; i++) dy.push(smooth[i] - smooth[i - 1]);
+    if (dy.length < 3) return 0;
+    const signs = dy.map(v => (v > 0 ? 1 : v < 0 ? -1 : 0));
+    for (let i = 1; i < signs.length; i++) {
+      if (signs[i] === 0) signs[i] = signs[i - 1];
+    }
+    let peaks = 0;
+    let troughs = 0;
+    for (let i = 1; i < signs.length; i++) {
+      if (signs[i - 1] > 0 && signs[i] <= 0) peaks += 1;
+      if (signs[i - 1] < 0 && signs[i] >= 0) troughs += 1;
+    }
+    return Math.max(0, Math.min(peaks, troughs));
+  }
+
+  function getLoopTargets() {
+    const task = TASKS[currentTaskId] || {};
+    return {
+      warmup: Math.max(0, Number(task.warmupLoops || WARMUP_LOOPS)),
+      counted: Math.max(1, Number(task.targetCountedLoops || TARGET_COUNTED_LOOPS)),
+    };
+  }
+
+  function updateLoopCounterDisplay(rep = currentRep) {
+    const el = document.getElementById('loopTimerDisplay');
+    if (!el) return;
+    const task = TASKS[currentTaskId];
+    if (!task || !task.isContinuousTask) {
+      el.style.display = 'none';
+      el.textContent = 'Boucles: 0/25';
+      return;
+    }
+    const loops = estimateLoopCount(rep);
+    const targets = getLoopTargets();
+    const counted = Math.max(0, loops - targets.warmup);
+    const pct = Math.round((counted / Math.max(1, targets.counted)) * 100);
+    el.style.display = 'inline-block';
+    el.textContent = `Boucles: ${counted}/${targets.counted} (${pct}%)`;
+  }
+
+  function activeLang() {
+    return (questionnaireLangEl && questionnaireLangEl.value) ? questionnaireLangEl.value : 'fr';
+  }
+
+  function tr(key) {
+    const lang = activeLang();
+    const locale = TRANSLATIONS[lang] || TRANSLATIONS.fr;
+    return locale[key] || TRANSLATIONS.fr[key] || key;
+  }
+
+  function updateRepControlsForTask() {
+    const task = TASKS[currentTaskId];
+    const isContinuous = !!task.isContinuousTask;
+    const fixedReps = Math.max(1, Number(task.requiredReps || MIN_REPS_REQUIRED));
+    newRepBtn.style.display = isContinuous ? 'none' : 'inline-flex';
+    clearRepBtn.style.display = isContinuous ? 'none' : 'inline-flex';
+    targetRepsEl.value = isContinuous ? String(fixedReps) : (targetRepsEl.value || '3');
+    targetRepsEl.disabled = isContinuous;
+    updateLoopCounterDisplay([]);
+  }
+
+  function selectTask(taskId) {
+    const hasStartedSession = !sessionLocked && (currentRep.length > 0 || repetitions.length > 0);
+    if (hasStartedSession && taskId !== currentTaskId) {
+      setStatus(tr('taskSwitchLocked'), 'warn');
+      return;
+    }
+    currentTaskId = taskId;
+    document.getElementById('taskBtnLetterL').classList.toggle('active', taskId === 'letter_l');
+    const _pBtn = document.getElementById('taskBtnPangram'); if (_pBtn) _pBtn.classList.toggle('active', taskId === 'pangram');
+    stopLoopTimer();
+    updateRepControlsForTask();
+    renderPhrasePanel();
+    updateCanvasInstruction();
+    updateSubmitState();
+    refreshJSON();
+  }
+
+  // Required because task buttons use inline onclick handlers in HTML.
+  window.selectTask = selectTask;
+
+  function renderPhrasePanel() {
+    const task = TASKS[currentTaskId];
+    const lang = activeLang();
+    const phrase = task.phraseMultilang ? (task.phraseMultilang[lang] || task.phrase) : task.phrase;
+    const subtitle = task.isContinuousTask ? tr('letterSubtitle') : tr('phraseSubtitle');
+
+    document.getElementById('phraseDisplay').innerHTML = `
+      <div class="phrase-primary">${phrase}</div>
+      <div class="phrase-secondary">${task.label} · ${subtitle}</div>
+    `;
+
+    document.getElementById('phraseRationale').innerHTML = task.rationale.map(r => `
+      <div class="rationale-item">
+        <span class="rationale-key">${r.key}</span>
+        <span>${r.val}</span>
+      </div>
+    `).join('');
+  }
+
+  function updateCanvasInstruction() {
+    const task = TASKS[currentTaskId];
+    const lang = activeLang();
+    const phrase = task.phraseMultilang ? (task.phraseMultilang[lang] || task.phrase) : task.phrase;
+    const canvasPhraseEl = document.getElementById('canvasPhrase');
+    const canvasInstructionEl = document.getElementById('canvasInstruction');
+    const loopTimerDisplayEl = document.getElementById('loopTimerDisplay');
+
+    if (task.isContinuousTask) {
+      if (canvasPhraseEl) canvasPhraseEl.textContent = '';
+      canvasInstructionEl.innerHTML = `
+        <div style="font-size:1.1rem;font-weight:600;letter-spacing:0.05em;color:var(--accent)">
+          ${tr('letterInstructionPrimary')}
+        </div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
+          ${tr('letterInstructionSecondary')}
+        </div>
+      `;
+      if (loopTimerDisplayEl) {
+        loopTimerDisplayEl.style.display = 'inline-block';
+        loopTimerDisplayEl.textContent = `Boucles: 0/${task.targetCountedLoops || TARGET_COUNTED_LOOPS}`;
+      }
+    } else {
+      canvasInstructionEl.innerHTML = `<span class="task-phrase" id="canvasPhrase">${phrase}</span>`;
+      if (loopTimerDisplayEl) {
+        loopTimerDisplayEl.style.display = 'none';
+        loopTimerDisplayEl.textContent = 'Boucles: 0/25';
+      }
+    }
+  }
+
+  function stopLoopTimer() {
+    loopTimer = null;
+    loopStartTime = null;
+  }
+
+  function endRepetition() {
+    if (finalizeRep()) {
+      setStatus(`Répétition #${repetitions.length} enregistrée — prête pour la suivante`, 'ok');
+    }
+  }
+
+  function startLoopTimer() {
+    const task = TASKS[currentTaskId];
+    if (!task || !task.isContinuousTask) return;
+    if (loopTimer) return;
+    loopStartTime = performance.now();
+    loopTimer = 1;
+    updateLoopCounterDisplay();
+  }
+
+  function getTaskThresholds() {
+    return QC_THRESHOLDS[currentTaskId] || QC_THRESHOLDS.pangram;
+  }
+
+  function computePathLen(rep) {
+    let path = 0;
+    if (!rep || rep.length < 2) return path;
+    for (let i = 1; i < rep.length; i++) {
+      const dx = rep[i].x - rep[i - 1].x;
+      const dy = rep[i].y - rep[i - 1].y;
+      path += Math.sqrt(dx * dx + dy * dy);
+    }
+    return path;
+  }
+
+  function updatePhraseProgress(rep) {
+    const bar = document.getElementById('phraseProgressBar');
+    const txt = document.getElementById('phraseProgressText');
+    if (!rep || rep.length < 2) {
+      bar.style.width = '0%';
+      bar.style.background = 'var(--warn)';
+      txt.textContent = 'En attente d’une phrase complète...';
+      txt.style.color = 'var(--muted)';
+      return;
+    }
+    const thresholds = getTaskThresholds();
+    const path = computePathLen(rep);
+    const ratio = Math.min(1, path / thresholds.MIN_PATH);
+    const pct = (ratio * 100).toFixed(0);
+    bar.style.width = pct + '%';
+    bar.style.background = ratio >= 1 ? 'var(--ok)' : ratio >= 0.7 ? 'var(--warn)' : 'var(--alert)';
+    if (ratio >= 1) {
+      txt.textContent = '✓ Phrase probablement complète';
+      txt.style.color = 'var(--ok)';
+    } else if (ratio >= 0.7) {
+      txt.textContent = `${pct}% — continuez à écrire`;
+      txt.style.color = 'var(--warn)';
+    } else {
+      txt.textContent = `${pct}% — phrase incomplète détectée`;
+      txt.style.color = 'var(--alert)';
+    }
+  }
+
+  function updateSubmitState() {
+    const repCount = repetitions.length;
+    const lastRep = repetitions[repetitions.length - 1];
+    const thresholds = getTaskThresholds();
+    const lastPath = computePathLen(lastRep);
+    const task = TASKS[currentTaskId];
+    const requiredReps = task.isContinuousTask
+      ? Math.max(1, Number(task.requiredReps || MIN_REPS_REQUIRED))
+      : Math.max(MIN_REPS_REQUIRED, parseInt(targetRepsEl.value || String(MIN_REPS_REQUIRED), 10));
+    const ready = repCount >= requiredReps && lastPath >= thresholds.MIN_PATH * 0.75;
+    const submitBtn = sendBtn;
+    submitBtn.disabled = !ready;
+    submitBtn.title = ready ? '' : `${requiredReps} répétition(s) complète(s) requise(s) (${repCount}/${requiredReps})`;
+  }
+
+  // ── API Base — synchronisé avec app.py (notebook pipeline) ──
+  const API_BASE = 'http://localhost:5000';
+
+  async function loadQuestionnaireCatalog() {
+    const lang = activeLang();
+    try {
+      const res = await fetch(`${API_BASE}/questionnaire_catalog?lang=${encodeURIComponent(lang)}`);
+      if (res.ok) {
+        questionnaireCatalog = await res.json();
+        return;
+      }
+    } catch (_) {
+      // fallback below
+    }
+
+    questionnaireCatalog = {
+      language: lang,
+      scales: {
+        ymrs: {
+          items: FALLBACK_QUESTIONNAIRES.scales.ymrs.items.map(x => ({
+            id: x.id,
+            max_score: x.max_score,
+            label: x.label[lang] || x.label.fr,
+          })),
+        },
+        madrs: {
+          items: FALLBACK_QUESTIONNAIRES.scales.madrs.items.map(x => ({
+            id: x.id,
+            max_score: x.max_score,
+            label: x.label[lang] || x.label.fr,
+          })),
+        },
+      },
+    };
+  }
+
+  async function loadProtocolConfig() {
+    try {
+      const res = await fetch(`${API_BASE}/protocol_config`);
+      if (!res.ok) return;
+      const cfg = await res.json();
+      applyProtocolConfig(cfg);
+    } catch (_) {
+      // Keep local defaults when backend is unavailable.
+    }
+  }
+
+  function buildQuestionnaireFlow() {
+    questionnaireFlow = [];
+    questionnaireAnswers = {};
+
+    const scales = questionnaireCatalog?.scales || {};
+    Object.keys(scales).forEach(scaleId => {
+      const items = scales[scaleId]?.items || [];
+      questionnaireAnswers[scaleId] = {};
+      items.forEach(item => {
+        questionnaireFlow.push({
+          scale: scaleId,
+          id: item.id,
+          label: item.label,
+          maxScore: Number(item.max_score),
+          ratingType: scales[scaleId]?.rating_type || scales[scaleId]?.type || 'unknown',
+        });
+      });
+    });
+    questionnaireCursor = -1;
+  }
+
+  function speechLang() {
+    const lang = questionnaireLangEl ? questionnaireLangEl.value : 'fr';
+    return QUESTIONNAIRE_LANGUAGE_META[lang]?.speech || 'fr-FR';
+  }
+
+  function uiMeta() {
+    const lang = questionnaireLangEl ? questionnaireLangEl.value : 'fr';
+    return QUESTIONNAIRE_LANGUAGE_META[lang] || QUESTIONNAIRE_LANGUAGE_META.fr;
+  }
+
+  function speakText(text) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = speechLang();
+    utt.rate = 0.96;
+    utt.pitch = 1.0;
+    window.speechSynthesis.speak(utt);
+  }
+
+  function renderCurrentVoiceQuestion() {
+    const meta = uiMeta();
+    if (questionnaireCursor < 0 || questionnaireCursor >= questionnaireFlow.length) {
+      voiceQuestionCurrentEl.textContent = meta.waiting;
+      return;
+    }
+    const q = questionnaireFlow[questionnaireCursor];
+    voiceQuestionCurrentEl.textContent = `${meta.ask} ${questionnaireCursor + 1}/${questionnaireFlow.length} · ${q.scale.toUpperCase()} · ${q.label} (${meta.max}: ${q.maxScore})`;
+  }
+
+  function getCurrentQuestion() {
+    if (questionnaireCursor < 0 || questionnaireCursor >= questionnaireFlow.length) return null;
+    return questionnaireFlow[questionnaireCursor];
+  }
+
+  function getAnswer(q) {
+    return questionnaireAnswers[q.scale]?.[q.id];
+  }
+
+  function setAnswer(q, value) {
+    if (!questionnaireAnswers[q.scale]) questionnaireAnswers[q.scale] = {};
+    questionnaireAnswers[q.scale][q.id] = value;
+  }
+
+  function allQuestionsAnswered() {
+    return questionnaireFlow.every(q => questionnaireAnswers[q.scale] && questionnaireAnswers[q.scale][q.id] !== undefined);
+  }
+
+  function applyQuestionnaireLocale() {
+    const meta = uiMeta();
+    questionnairePanel.setAttribute('dir', meta.dir || 'ltr');
+    questionnaireTitle.textContent = meta.title;
+    questionnaireReplayBtn.textContent = meta.replay;
+    questionnaireMicBtn.textContent = meta.mic;
+    questionnairePrevBtn.textContent = meta.prev;
+    questionnaireNextBtn.textContent = meta.next;
+    questionnaireValidateBtn.textContent = meta.validate;
+    questionnaireCloseBtn.textContent = meta.close;
+    questionnaireAnswerLabel.textContent = meta.value;
+    voiceQuestionCurrentEl.textContent = tr('waitingQuestionnaire');
+    const privacy = document.getElementById('micPrivacyBadge');
+    if (privacy) privacy.textContent = tr('micPrivate');
+  }
+
+  function readCurrentQuestion() {
+    const q = getCurrentQuestion();
+    if (!q) return;
+    const meta = uiMeta();
+    const msg = `${meta.ask} ${questionnaireCursor + 1}. ${q.label}. ${meta.max} ${q.maxScore}.`;
+    speakText(msg);
+  }
+
+  function renderQuestionnaireQuestion() {
+    const q = getCurrentQuestion();
+    if (!q) return;
+    const meta = uiMeta();
+    questionnaireProgress.textContent = `${meta.ask} ${questionnaireCursor + 1} / ${questionnaireFlow.length}`;
+    questionnaireQuestionLabel.textContent = q.label;
+    questionnaireQuestionMeta.textContent = `${q.scale.toUpperCase()} · ${meta.max}: ${q.maxScore}`;
+
+    const currentVal = getAnswer(q);
+    questionnaireScaleValues.innerHTML = Array.from({ length: q.maxScore + 1 }, (_, n) => {
+      const active = currentVal === n ? 'active' : '';
+      return `<button class="questionnaire-scale-btn ${active}" data-v="${n}">${n}</button>`;
+    }).join('');
+
+    questionnaireAnswerInput.min = '0';
+    questionnaireAnswerInput.max = String(q.maxScore);
+    questionnaireAnswerInput.value = currentVal === undefined ? '' : String(currentVal);
+    questionnairePrevBtn.disabled = questionnaireCursor <= 0;
+    questionnaireNextBtn.disabled = questionnaireCursor >= questionnaireFlow.length - 1;
+    questionnaireError.style.display = 'none';
+    renderCurrentVoiceQuestion();
+    updateQuestionnaireValidateState();
+    readCurrentQuestion();
+  }
+
+  function updateQuestionnaireValidateState() {
+    questionnaireValidateBtn.disabled = !allQuestionsAnswered();
+  }
+
+  async function openQuestionnaireModal(triggerPayload) {
+    await loadQuestionnaireCatalog();
+    buildQuestionnaireFlow();
+    questionnaireCursor = 0;
+    applyQuestionnaireLocale();
+    questionnaireSummary.style.display = 'none';
+    questionnaireError.style.display = 'none';
+    questionnaireModal.style.display = 'grid';
+    questionnaireModal.setAttribute('aria-hidden', 'false');
+    renderQuestionnaireQuestion();
+    setStatus('Questionnaire requis par le backend', 'info');
+    if (triggerPayload && triggerPayload.message) {
+      questionnaireSummary.style.display = 'block';
+      questionnaireSummary.textContent = String(triggerPayload.message);
+    }
+  }
+
+  function closeQuestionnaireModal() {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (recognition && isListening) recognition.stop();
+    questionnaireModal.style.display = 'none';
+    questionnaireModal.setAttribute('aria-hidden', 'true');
+    questionnaireMicBtn.classList.remove('active');
+    setStatus('Questionnaire fermé', 'ok');
+  }
+
+  function parseSpokenNumber(rawText, maxScore) {
+    const text = String(rawText || '').toLowerCase().trim();
+    const digitMatch = text.match(/\d+/);
+    if (digitMatch) {
+      const n = Number(digitMatch[0]);
+      if (Number.isFinite(n) && n >= 0 && n <= maxScore) return n;
+    }
+
+    const tokenMap = {
+      fr: { zero: 0, zéro: 0, un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6, sept: 7, huit: 8, neuf: 9, dix: 10 },
+      en: { zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 },
+      ar: { 'صفر': 0, 'واحد': 1, 'واحدة': 1, 'اثنان': 2, 'اثنين': 2, 'ثلاثة': 3, 'اربع': 4, 'أربعة': 4, 'خمسة': 5, 'ستة': 6, 'سبعة': 7, 'ثمانية': 8, 'تسعة': 9, 'عشرة': 10 },
+    };
+
+    const allMaps = [tokenMap.fr, tokenMap.en, tokenMap.ar];
+    for (const m of allMaps) {
+      for (const [k, v] of Object.entries(m)) {
+        if (text.includes(k) && v <= maxScore) return v;
+      }
+    }
+    return null;
+  }
+
+  function parseSpeechAnswer(question, transcript) {
+    const text = String(transcript || '').toLowerCase().trim();
+    const lang = activeLang();
+
+    if (question.scale === 'phq9') {
+      const map = {
+        fr: {
+          'jamais': 0,
+          'pas du tout': 0,
+          'quelques jours': 1,
+          'plusieurs jours': 1,
+          'plus de la moitie des jours': 2,
+          'presque chaque jour': 3,
+        },
+        en: {
+          'not at all': 0,
+          'never': 0,
+          'several days': 1,
+          'more than half the days': 2,
+          'nearly every day': 3,
+        },
+        ar: {
+          'ابدا': 0,
+          'أبدا': 0,
+          'عدة ايام': 1,
+          'عدة أيام': 1,
+          'اكثر من نصف الايام': 2,
+          'أكثر من نصف الأيام': 2,
+          'تقريبا كل يوم': 3,
+          'تقريبًا كل يوم': 3,
+        },
+      };
+      for (const [k, v] of Object.entries(map[lang] || {})) {
+        if (text.includes(k)) return v;
+      }
+    }
+
+    if (question.scale === 'mdq') {
+      if (question.id === 'functional_impact') {
+        const impactMap = {
+          fr: { aucun: 0, leger: 1, léger: 1, modere: 2, modéré: 2, severe: 3, sévère: 3 },
+          en: { none: 0, minor: 1, moderate: 2, serious: 3, severe: 3 },
+          ar: { 'لا': 0, 'خفيف': 1, 'متوسط': 2, 'شديد': 3 },
+        };
+        for (const [k, v] of Object.entries(impactMap[lang] || {})) {
+          if (text.includes(k)) return v;
+        }
+      } else {
+        const yesNoMap = {
+          fr: { oui: 1, non: 0 },
+          en: { yes: 1, no: 0 },
+          ar: { 'نعم': 1, 'لا': 0 },
+        };
+        for (const [k, v] of Object.entries(yesNoMap[lang] || {})) {
+          if (text.includes(k)) return v;
+        }
+      }
+    }
+
+    return parseSpokenNumber(text, question.maxScore);
+  }
+
+  function updateClinicalScoresFromAnswers() {
+    const ymrsTotal = Object.values(questionnaireAnswers.ymrs).reduce((s, v) => s + Number(v || 0), 0);
+    const madrsTotal = Object.values(questionnaireAnswers.madrs).reduce((s, v) => s + Number(v || 0), 0);
+    ymrsEl.value = String(Math.max(0, Math.min(60, ymrsTotal)));
+    madrsEl.value = String(Math.max(0, Math.min(60, madrsTotal)));
+    updateSliders();
+    refreshJSON();
+  }
+
+  function captureVoiceAnswerFromTranscript(transcript) {
+    const q = getCurrentQuestion();
+    if (!q) return;
+    const val = parseSpeechAnswer(q, transcript);
+    if (val === null) {
+      questionnaireError.textContent = tr('speechUnrecognized');
+      questionnaireError.style.display = 'block';
+      setStatus(tr('speechUnrecognized'), 'warn');
+      return;
+    }
+    setAnswer(q, val);
+    questionnaireAnswerInput.value = String(val);
+    renderQuestionnaireQuestion();
+    setStatus(`Réponse enregistrée: ${q.scale.toUpperCase()} ${q.id} = ${val}`, 'ok');
+  }
+
+  async function submitQuestionnaireScores() {
+    if (!allQuestionsAnswered()) {
+      questionnaireError.textContent = uiMeta().fillAll;
+      questionnaireError.style.display = 'block';
+      return;
+    }
+
+    updateClinicalScoresFromAnswers();
+    const ymrsTotal = Object.values(questionnaireAnswers.ymrs).reduce((s, v) => s + Number(v || 0), 0);
+    const madrsTotal = Object.values(questionnaireAnswers.madrs).reduce((s, v) => s + Number(v || 0), 0);
+    questionnaireSummary.style.display = 'block';
+    questionnaireSummary.textContent = `YMRS=${ymrsTotal} | MADRS=${madrsTotal}`;
+
+    const lang = questionnaireLangEl ? questionnaireLangEl.value : 'fr';
+    try {
+      const res = await fetch(`${API_BASE}/questionnaires/score`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionnaire_answers: questionnaireAnswers, lang }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      renderResult({
+        ...data,
+        message: data.message || data.label || data.clinical_label || 'Questionnaires cliniques évalués',
+      });
+      const ymrsBackend = data.ymrs_total ?? data.ymrs;
+      const madrsBackend = data.madrs_total ?? data.madrs;
+      if (ymrsBackend != null) ymrsEl.value = String(Math.max(0, Math.min(60, Number(ymrsBackend))));
+      if (madrsBackend != null) madrsEl.value = String(Math.max(0, Math.min(60, Number(madrsBackend))));
+      updateSliders();
+      refreshJSON();
+      closeQuestionnaireModal();
+      setStatus(uiMeta().submitted, 'ok');
+    } catch (e) {
+      questionnaireError.textContent = `${uiMeta().submitFail}: ${e.message}`;
+      questionnaireError.style.display = 'block';
+      setStatus(uiMeta().submitFail, 'warn');
+    }
+  }
+
+  function ensureRecognition() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return null;
+    if (recognition) return recognition;
+
+    recognition = new SR();
+    recognition.lang = speechLang();
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      isListening = true;
+      setStatus('Écoute micro active...', 'info');
+      questionnaireMicBtn.classList.add('active');
+      const privacy = document.getElementById('micPrivacyBadge');
+      if (privacy) privacy.style.display = 'inline-flex';
+    };
+    recognition.onend = () => {
+      isListening = false;
+      questionnaireMicBtn.classList.remove('active');
+      const privacy = document.getElementById('micPrivacyBadge');
+      if (privacy) privacy.style.display = 'none';
+    };
+    recognition.onerror = () => {
+      setStatus('Erreur micro/reconnaissance vocale', 'warn');
+      questionnaireMicBtn.classList.remove('active');
+      const privacy = document.getElementById('micPrivacyBadge');
+      if (privacy) privacy.style.display = 'none';
+    };
+    recognition.onresult = (event) => {
+      const transcript = event?.results?.[0]?.[0]?.transcript || '';
+      captureVoiceAnswerFromTranscript(transcript);
+    };
+
+    return recognition;
+  }
+
+  // ── DOM refs ──
+  const mainCanvas    = document.getElementById('mainCanvas');
+  const ctx           = mainCanvas.getContext('2d');
+  const miniTrajEl    = document.getElementById('miniTrajectory');
+  const miniTrajCtx   = miniTrajEl.getContext('2d');
+  const miniSpeedEl   = document.getElementById('miniSpeed');
+  const miniSpeedCtx  = miniSpeedEl.getContext('2d');
+
+  const patientIdEl   = document.getElementById('patientId');
+  const sessionIdEl   = document.getElementById('sessionId');
+  const phaseEl       = document.getElementById('phase');
+  const conditionEl   = document.getElementById('condition');
+  const ymrsEl        = document.getElementById('ymrs');
+  const madrsEl       = document.getElementById('madrs');
+  const ymrsVal       = document.getElementById('ymrsVal');
+  const madrsVal      = document.getElementById('madrsVal');
+  const ymrsDisp      = document.getElementById('ymrsDisplay');
+  const madrsDisp     = document.getElementById('madrsDisplay');
+  const ymrsBar       = document.getElementById('ymrsBar');
+  const madrsBar      = document.getElementById('madrsBar');
+  const targetRepsEl  = document.getElementById('targetReps');
+  const sendRouteBadge = document.getElementById('sendRouteBadge');
+
+  const repBadge      = document.getElementById('repBadge');
+  const pointCounterEl= document.getElementById('pointCounter');
+  const durationPill  = document.getElementById('durationPill');
+  const pressurePill  = document.getElementById('pressurePill');
+  const pressureFallbackBadge = document.getElementById('pressureFallbackBadge');
+  const pressureRealBadge     = document.getElementById('pressureRealBadge');
+  const canvasContainer = document.getElementById('canvasContainer');
+  const lockedBadge   = document.getElementById('lockedBadge');
+
+  const newRepBtn     = document.getElementById('newRepBtn');
+  const clearRepBtn   = document.getElementById('clearRepBtn');
+  const finishBtn     = document.getElementById('finishBtn');
+  const resetBtn      = document.getElementById('resetBtn');
+  const copyBtn       = document.getElementById('copyBtn');
+  const downloadBtn   = document.getElementById('downloadBtn');
+  const sendBtn       = document.getElementById('sendBtn');
+
+  const jsonOutput    = document.getElementById('jsonOutput');
+  const statusText    = document.getElementById('statusText');
+  const statusBar     = document.getElementById('statusBar');
+  const statusIcon    = document.getElementById('statusIcon');
+  const resultArea    = document.getElementById('resultArea');
+  const repHistory    = document.getElementById('repHistory');
+  const qcBarsA       = document.getElementById('qcBarsA');
+  const qcLastText    = document.getElementById('qcLastText');
+  const questionnaireLangEl = document.getElementById('questionnaireLang');
+  const voiceQuestionCurrentEl = document.getElementById('voiceQuestionCurrent');
+  const questionnaireModal = document.getElementById('questionnaireModal');
+  const questionnairePanel = document.getElementById('questionnairePanel');
+  const questionnaireBackdrop = document.getElementById('questionnaireBackdrop');
+  const questionnaireTitle = document.getElementById('questionnaireTitle');
+  const questionnaireProgress = document.getElementById('questionnaireProgress');
+  const questionnaireQuestionLabel = document.getElementById('questionnaireQuestionLabel');
+  const questionnaireQuestionMeta = document.getElementById('questionnaireQuestionMeta');
+  const questionnaireScaleValues = document.getElementById('questionnaireScaleValues');
+  const questionnaireAnswerInput = document.getElementById('questionnaireAnswerInput');
+  const questionnaireAnswerLabel = document.getElementById('questionnaireAnswerLabel');
+  const questionnaireReplayBtn = document.getElementById('questionnaireReplayBtn');
+  const questionnaireMicBtn = document.getElementById('questionnaireMicBtn');
+  const questionnairePrevBtn = document.getElementById('questionnairePrevBtn');
+  const questionnaireNextBtn = document.getElementById('questionnaireNextBtn');
+  const questionnaireValidateBtn = document.getElementById('questionnaireValidateBtn');
+  const questionnaireSummary = document.getElementById('questionnaireSummary');
+  const questionnaireError = document.getElementById('questionnaireError');
+  const questionnaireCloseBtn = document.getElementById('questionnaireCloseBtn');
+  const langBtnFr = document.getElementById('langBtnFr');
+  const langBtnEn = document.getElementById('langBtnEn');
+  const langBtnAr = document.getElementById('langBtnAr');
+
+  // ── State ──
+  let repetitions     = [];
+  let currentRep      = [];
+  let drawing         = false;
+  let sessionLocked   = false;
+  let repStartT       = null;
+  let pressureFallback= false;
+  let pressureReal    = false;
+
+  function setLanguage(lang) {
+    const safeLang = ['fr', 'en', 'ar'].includes(lang) ? lang : 'fr';
+    if (questionnaireLangEl) questionnaireLangEl.value = safeLang;
+    document.documentElement.lang = safeLang;
+    document.dir = safeLang === 'ar' ? 'rtl' : 'ltr';
+    document.body.dir = document.dir;
+    langBtnFr.classList.toggle('active', safeLang === 'fr');
+    langBtnEn.classList.toggle('active', safeLang === 'en');
+    langBtnAr.classList.toggle('active', safeLang === 'ar');
+    const badge = document.querySelector('.badge-live');
+    if (badge) badge.lastChild.textContent = ` ${tr('badgeLive')}`;
+  }
+
+  // ── Session ID ──
+  function generateSessionId() {
+    const d = new Date();
+    const p = n => String(n).padStart(2,'0');
+    return `S_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}${String(d.getMilliseconds()).padStart(3,'0')}`;
+  }
+
+  async function init() {
+    patientIdEl.value = patientIdEl.value || 'P001';
+    sessionIdEl.value = generateSessionId();
+    await loadProtocolConfig();
+    setLanguage(activeLang());
+    updateRepControlsForTask();
+    renderPhrasePanel();
+    updateCanvasInstruction();
+    updateSliders();
+    await loadQuestionnaireCatalog();
+    buildQuestionnaireFlow();
+    applyQuestionnaireLocale();
+    renderCurrentVoiceQuestion();
+    updateCounters();
+    updateSendDestinationBadge();
+    updateSubmitState();
+    refreshJSON();
+    renderRepHistory();
+  }
+
+  // ── Sliders ──
+  function scoreColor(v, max) {
+    const r = v / max;
+    if (r < 0.25) return 'var(--ok)';
+    if (r < 0.55) return 'var(--warn)';
+    return 'var(--alert)';
+  }
+
+  function updateSliders() {
+    const y = Number(ymrsEl.value);
+    const m = Number(madrsEl.value);
+    ymrsVal.textContent = y; ymrsDisp.textContent = y;
+    madrsVal.textContent = m; madrsDisp.textContent = m;
+    ymrsBar.style.width = (y/60*100) + '%';
+    ymrsBar.style.background = scoreColor(y, 60);
+    madrsBar.style.width = (m/60*100) + '%';
+    madrsBar.style.background = scoreColor(m, 60);
+  }
+
+  // ── Canvas coords ──
+  function canvasXY(evt) {
+    const r = mainCanvas.getBoundingClientRect();
+    return {
+      x: (evt.clientX - r.left) * (mainCanvas.width / r.width),
+      y: (evt.clientY - r.top)  * (mainCanvas.height / r.height),
+    };
+  }
+
+  function getPressure(evt) {
+    let p = (typeof evt.pressure === 'number') ? evt.pressure : 0;
+    if (p === 0) {
+      if (!pressureFallback) {
+        pressureFallback = true;
+        pressureFallbackBadge.style.display = 'inline-flex';
+      }
+      p = 0.5;
+    } else {
+      if (!pressureReal) {
+        pressureReal = true;
+        pressureRealBadge.style.display = 'inline-flex';
+        pressureFallbackBadge.style.display = 'none';
+      }
+    }
+    return parseFloat(p.toFixed(4));
+  }
+
+  // ── Point capture ──
+  function pushPoint(evt, penDown) {
+    const {x, y} = canvasXY(evt);
+    const now = performance.now();
+    if (repStartT === null) repStartT = now;
+    const p = getPressure(evt);
+    currentRep.push({
+      x: parseFloat(x.toFixed(2)),
+      y: parseFloat(y.toFixed(2)),
+      t: parseFloat((now - repStartT).toFixed(2)),
+      pressure: p,
+      pen_down: !!penDown,
+    });
+    pressurePill.textContent = `Pression : ${p.toFixed(2)}`;
+  }
+
+  // ── Draw canvas principal ──
+  function redrawMain() {
+    ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+
+    // Réglure : ligne de base + ligne du haut
+    const baseY = Math.round(mainCanvas.height * 0.68);
+    const topY  = Math.round(mainCanvas.height * 0.28);
+    ctx.strokeStyle = '#e8eff8'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, baseY); ctx.lineTo(mainCanvas.width, baseY); ctx.stroke();
+    ctx.strokeStyle = '#f0f5fb';
+    ctx.beginPath(); ctx.moveTo(0, topY); ctx.lineTo(mainCanvas.width, topY); ctx.stroke();
+
+    if (currentRep.length < 2) return;
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+
+    // Segmentation pen_down correcte : pas de trait fantôme lors des levées de stylet
+    for (let i = 1; i < currentRep.length; i++) {
+      const a = currentRep[i - 1];
+      const b = currentRep[i];
+      if (!a.pen_down || !b.pen_down) continue;
+      const w = Math.max(1.0, (a.pressure + b.pressure) / 2 * 5);
+      ctx.lineWidth = w;
+      ctx.strokeStyle = '#1d4ed8';
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+  }
+
+  // ── QC ──
+  function computeQC(rep) {
+    if (!rep || rep.length < 2) return { nPoints:0, duration:0, pathLen:0, meanPressure:0, loops:0, countedLoops:0, confidence:0 };
+    const thresholds = getTaskThresholds();
+    const task = TASKS[currentTaskId];
+    const n = rep.length;
+    const dur = Math.max(0, rep[n-1].t - rep[0].t);
+    const path = computePathLen(rep);
+    const loops = estimateLoopCount(rep);
+    const loopTargets = getLoopTargets();
+    const countedLoops = Math.max(0, loops - loopTargets.warmup);
+    const meanP = rep.reduce((s,p) => s + p.pressure, 0) / n;
+    let conf = 1.0;
+    if (n < thresholds.MIN_POINTS) conf -= 0.35;
+    if (task.isContinuousTask) {
+      if (countedLoops < thresholds.MIN_LOOPS) conf -= 0.30;
+    } else if (dur < thresholds.MIN_DURATION) {
+      conf -= 0.30;
+    }
+    if (path < thresholds.MIN_PATH) conf -= 0.40;
+    if (pressureFallback)          conf -= 0.10;
+    return { nPoints:n, duration:dur, pathLen:path, meanPressure:meanP, loops, countedLoops, confidence: Math.max(0, Math.min(1, conf)) };
+  }
+
+  function confColor(c) {
+    if (c >= 0.8) return 'var(--ok)';
+    if (c >= 0.6) return 'var(--warn)';
+    return 'var(--alert)';
+  }
+
+  function renderQCBars(qc) {
+    const thresholds = getTaskThresholds();
+    const task = TASKS[currentTaskId];
+    const bars = [
+      { label:'Points', val: Math.min(1, qc.nPoints / Math.max(1, thresholds.MIN_POINTS)) },
+      task.isContinuousTask
+        ? { label:'Boucles', val: Math.min(1, (qc.countedLoops || 0) / Math.max(1, thresholds.MIN_LOOPS || TARGET_COUNTED_LOOPS)) }
+        : { label:'Durée',  val: qc.duration > 0 ? Math.min(1, qc.duration / Math.max(1, thresholds.MIN_DURATION)) : 0 },
+      { label:'Chemin', val: Math.min(1, qc.pathLen / Math.max(1, thresholds.MIN_PATH)) },
+      { label:'Conf.',  val: qc.confidence },
+    ];
+    qcBarsA.innerHTML = bars.map(b => `
+      <div class="qc-bar-row">
+        <div class="qc-bar-label">${b.label}</div>
+        <div class="qc-bar-bg"><div class="qc-bar-fill" style="width:${(b.val*100).toFixed(1)}%;background:${confColor(b.val)}"></div></div>
+        <div class="qc-val">${(b.val*100).toFixed(0)}%</div>
+      </div>
+    `).join('');
+  }
+
+  // ── Mini trajectory ──
+  function drawMiniTraj(rep) {
+    miniTrajCtx.clearRect(0, 0, miniTrajEl.width, miniTrajEl.height);
+    miniTrajCtx.fillStyle = '#fff';
+    miniTrajCtx.fillRect(0,0,miniTrajEl.width,miniTrajEl.height);
+    if (!rep || rep.length < 2) return;
+    const drawn = rep.filter(p => p.pen_down);
+    if (drawn.length < 2) return;
+    let mx=Infinity,my=Infinity,xx=-Infinity,xy=-Infinity;
+    drawn.forEach(p => { mx=Math.min(mx,p.x); my=Math.min(my,p.y); xx=Math.max(xx,p.x); xy=Math.max(xy,p.y); });
+    const pad=8, w=Math.max(1,xx-mx), h=Math.max(1,xy-my);
+    const s = Math.min((miniTrajEl.width-pad*2)/w, (miniTrajEl.height-pad*2)/h);
+    miniTrajCtx.strokeStyle='#1d4ed8'; miniTrajCtx.lineWidth=1.5; miniTrajCtx.lineJoin='round'; miniTrajCtx.lineCap='round';
+    for (let i = 0; i < rep.length; i++) {
+      const pt = rep[i];
+      if (!pt.pen_down) continue;
+      const prev = rep[i-1];
+      const x = pad+(pt.x-mx)*s, y = pad+(pt.y-my)*s;
+      if (!prev || !prev.pen_down) {
+        miniTrajCtx.beginPath(); miniTrajCtx.moveTo(x, y);
+      } else {
+        miniTrajCtx.lineTo(x, y); miniTrajCtx.stroke();
+        miniTrajCtx.beginPath(); miniTrajCtx.moveTo(x, y);
+      }
+    }
+  }
+
+  // ── Mini speed ──
+  function drawMiniSpeed(rep) {
+    miniSpeedCtx.clearRect(0, 0, miniSpeedEl.width, miniSpeedEl.height);
+    miniSpeedCtx.fillStyle = '#fff';
+    miniSpeedCtx.fillRect(0,0,miniSpeedEl.width,miniSpeedEl.height);
+    if (!rep || rep.length < 3) return;
+    const speeds = [];
+    for (let i=1; i<rep.length; i++) {
+      const dx=rep[i].x-rep[i-1].x, dy=rep[i].y-rep[i-1].y;
+      const dt=Math.max(0.001, rep[i].t-rep[i-1].t);
+      speeds.push(Math.sqrt(dx*dx+dy*dy)/dt);
+    }
+    const maxV=Math.max(...speeds,1), pad=10;
+    miniSpeedCtx.strokeStyle='#b45309'; miniSpeedCtx.lineWidth=2; miniSpeedCtx.lineJoin='round';
+    miniSpeedCtx.beginPath();
+    speeds.forEach((v,i) => {
+      const x=pad+(i/Math.max(1,speeds.length-1))*(miniSpeedEl.width-pad*2);
+      const y=miniSpeedEl.height-pad-(v/maxV)*(miniSpeedEl.height-pad*2);
+      i===0 ? miniSpeedCtx.moveTo(x,y) : miniSpeedCtx.lineTo(x,y);
+    });
+    miniSpeedCtx.stroke();
+  }
+
+  // ── Counters ──
+  function updateCounters() {
+    const task = TASKS[currentTaskId];
+    const target = task.isContinuousTask
+      ? Math.max(1, Number(task.requiredReps || MIN_REPS_REQUIRED))
+      : Math.max(1, parseInt(targetRepsEl.value||'3',10));
+    repBadge.textContent = `Rép. ${repetitions.length+1} / ${target}`;
+    pointCounterEl.textContent = `Points : ${currentRep.length}`;
+    if (currentRep.length > 1) {
+      const dur = currentRep[currentRep.length-1].t - currentRep[0].t;
+      durationPill.textContent = `Durée : ${(dur/1000).toFixed(1)}s`;
+    } else {
+      durationPill.textContent = 'Durée : —';
+    }
+    if (task.isContinuousTask) updateLoopCounterDisplay(currentRep);
+  }
+
+  function isOnboardingPhase() {
+    const phase = (phaseEl.value || '').toLowerCase();
+    return phase === 'onboarding' || phase === 'baseline';
+  }
+
+  function updateSendDestinationBadge() {
+    if (!sendRouteBadge) return;
+    if (isOnboardingPhase()) {
+      sendRouteBadge.textContent = 'Destination API: Onboarding API (/onboarding/<patient_id>/session)';
+      sendRouteBadge.className = 'pill warn';
+    } else {
+      sendRouteBadge.textContent = 'Destination API: Scoring API (/score)';
+      sendRouteBadge.className = 'pill accent';
+    }
+  }
+
+  // ── Rep history ──
+  function renderRepHistory() {
+    if (repetitions.length === 0) {
+      repHistory.innerHTML = '<div style="font-size:0.74rem;color:var(--muted);text-align:center;padding:10px 0">Aucune répétition enregistrée</div>';
+      return;
+    }
+    repHistory.innerHTML = repetitions.map((rep, i) => {
+      const qc = computeQC(rep);
+      const cc = confColor(qc.confidence);
+      const taskLabel = rep._task === 'letter_l' ? 'T1' : 'T2';
+      return `
+        <div class="rep-item">
+          <span class="rep-num">#${i+1}</span>
+          <span class="rep-task">${taskLabel}</span>
+          <span class="rep-stats">${qc.nPoints}pts · ${(qc.duration/1000).toFixed(1)}s · ${Math.round(qc.pathLen)}px</span>
+          <span class="rep-conf pill" style="border-color:${cc};color:${cc};background:transparent;font-size:0.64rem">${(qc.confidence*100).toFixed(0)}%</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ── Status ──
+  function setStatus(msg, type='ok') {
+    statusText.textContent = msg;
+    const icons = { ok:'🟢', warn:'🟡', alert:'🔴', info:'🔵' };
+    statusIcon.textContent = icons[type] || '🔵';
+  }
+
+  // ── JSON ──
+  function buildSession() {
+    const pid = (patientIdEl.value||'').trim();
+    if (!pid) throw new Error('patient_id manquant');
+    // Nettoyage : on retire le champ interne _task avant export
+    const cleanReps = repetitions.map(rep => rep.map(pt => {
+      const { _task, ...rest } = pt;
+      return rest;
+    }));
+    const task = TASKS[currentTaskId];
+    const lang = activeLang();
+    const phrase = task.phraseMultilang ? (task.phraseMultilang[lang] || task.phrase) : task.phrase;
+    return {
+      patient_id: pid,
+      session_id: sessionIdEl.value,
+      phase: phaseEl.value,
+      condition: conditionEl.value,
+      lang,
+      task_type: task.task_type,
+      task: currentTaskId,
+      task_id: currentTaskId,
+      task_label: task.label,
+      phrase: phrase,
+      questionnaire_lang: questionnaireLangEl ? questionnaireLangEl.value : 'fr',
+      questionnaire_answers: questionnaireAnswers,
+      ymrs: Number(ymrsEl.value),
+      madrs: Number(madrsEl.value),
+      repetitions: cleanReps,
+    };
+  }
+
+  function refreshJSON() {
+    try { jsonOutput.value = JSON.stringify(buildSession(), null, 2); }
+    catch(e) { jsonOutput.value = `// Erreur: ${e.message}`; }
+  }
+
+  // ── Finalize repetition ──
+  function finalizeRep() {
+    if (sessionLocked || currentRep.length < 2) return false;
+    stopLoopTimer();
+    // Stocker la tâche dans la répétition pour l'historique
+    const repWithTask = currentRep.map(pt => ({ ...pt, _task: currentTaskId }));
+    repetitions.push(repWithTask);
+    // Tagger la dernière répétition pour l'historique
+    repetitions[repetitions.length - 1]._task = currentTaskId;
+
+    const qc = computeQC(currentRep);
+    const loopInfo = currentTaskId === 'letter_l' ? ` · ${qc.countedLoops} boucles` : ` · ${(qc.duration/1000).toFixed(1)}s`;
+    qcLastText.textContent = `Dernière validée #${repetitions.length} (${currentTaskId === 'letter_l' ? 'T1' : 'T2'}) — ${qc.nPoints}pts${loopInfo} · conf. ${(qc.confidence*100).toFixed(0)}%`;
+    updatePhraseProgress(repWithTask);
+    const thresholds = getTaskThresholds();
+    const lastPath = computePathLen(repWithTask);
+    const repIdx = repetitions.length - 1;
+    if (lastPath < thresholds.MIN_PATH) {
+      setStatus(
+        `Répétition ${repIdx + 1} : phrase probablement incomplète (chemin ${lastPath.toFixed(0)}px < ${thresholds.MIN_PATH}px attendus). Réessayez en écrivant la phrase entière.`,
+        'warn'
+      );
+    }
+    currentRep = [];
+    repStartT = null;
+    updateCounters();
+    updateSubmitState();
+    renderRepHistory();
+    refreshJSON();
+    redrawMain();
+    drawMiniTraj([]);
+    drawMiniSpeed([]);
+    renderQCBars(computeQC([]));
+    return true;
+  }
+
+  // ── Lock / reset ──
+  function lockSession() {
+    sessionLocked = true;
+    canvasContainer.classList.add('locked');
+    canvasContainer.classList.remove('drawing');
+    lockedBadge.style.display = 'inline-flex';
+    finishBtn.textContent = '🔒 Session terminée';
+    finishBtn.disabled = true;
+    setStatus('Session verrouillée — export disponible', 'ok');
+  }
+
+  function resetSession() {
+    stopLoopTimer();
+    sessionLocked = false;
+    repetitions = []; currentRep = []; repStartT = null;
+    pressureFallback = false; pressureReal = false;
+    pressureFallbackBadge.style.display = 'none';
+    pressureRealBadge.style.display = 'none';
+    canvasContainer.classList.remove('locked','drawing');
+    lockedBadge.style.display = 'none';
+    sessionIdEl.value = generateSessionId();
+    finishBtn.textContent = '✓ Terminer la session';
+    finishBtn.disabled = false;
+    setStatus('Session ouverte — prêt à capturer','ok');
+    updateCounters();
+    updateSubmitState();
+    redrawMain();
+    drawMiniTraj([]); drawMiniSpeed([]); renderQCBars(computeQC([]));
+    renderRepHistory(); refreshJSON();
+    resultArea.innerHTML = `<div class="result-empty"><div class="result-icon">🧠</div><div style="font-size:0.82rem">En attente d'analyse</div><div style="font-size:0.72rem">Terminez une session et envoyez au pipeline</div></div>`;
+  }
+
+  function validateSessionForExport() {
+    const task = TASKS[currentTaskId];
+    const target = task.isContinuousTask
+      ? Math.max(1, Number(task.requiredReps || MIN_REPS_REQUIRED))
+      : Math.max(MIN_REPS_REQUIRED, parseInt(targetRepsEl.value || String(MIN_REPS_REQUIRED), 10));
+    const thresholds = getTaskThresholds();
+    const ymrs = Number(ymrsEl.value || 0);
+    const madrs = Number(madrsEl.value || 0);
+    const phase = (phaseEl.value || '').toLowerCase();
+    if (phase === 'onboarding' && ymrs === 0 && madrs === 0)
+      return { ok: false, message: 'Phase onboarding : YMRS et MADRS requis' };
+    if (repetitions.length < target)
+      return { ok: false, message: `Répétitions insuffisantes: ${repetitions.length}/${target}.` };
+    for (let i = 0; i < repetitions.length; i++) {
+      const qc = computeQC(repetitions[i]);
+      if (qc.nPoints < thresholds.MIN_POINTS)
+        return { ok: false, message: `Répétition #${i+1} invalide: trop peu de points (${qc.nPoints}/${thresholds.MIN_POINTS}).` };
+      if (qc.pathLen < thresholds.MIN_PATH)
+        return { ok: false, message: `Répétition #${i+1} invalide: chemin trop court (${qc.pathLen.toFixed(0)}px/${thresholds.MIN_PATH}px).` };
+      if (task.isContinuousTask && qc.countedLoops < thresholds.MIN_LOOPS)
+        return { ok: false, message: `Répétition #${i+1} invalide: boucles insuffisantes (${qc.countedLoops}/${thresholds.MIN_LOOPS}).` };
+      if (!task.isContinuousTask && qc.duration < thresholds.MIN_DURATION)
+        return { ok: false, message: `Répétition #${i+1} invalide: durée trop courte (${qc.duration.toFixed(0)}ms/${thresholds.MIN_DURATION}ms).` };
+      if (qc.confidence < 0.50)
+        return { ok: false, message: `Répétition #${i+1}: confiance QC trop basse (${(qc.confidence*100).toFixed(0)}%).` };
+    }
+    return { ok: true, message: 'Session valide pour export.' };
+  }
+
+  // ── Render result ──
+  function renderResult(payload) {
+    const score  = payload.score ?? payload.anomaly_score ?? null;
+    const thr    = payload.threshold ?? payload.seuil ?? null;
+    const qc     = payload.qc_confidence ?? payload.qc ?? null;
+    const questionnaireLabel = payload.clinical_label ?? payload.label ?? payload.questionnaire_label ?? null;
+    const ymrsTotal = payload.ymrs_total ?? payload.ymrs ?? null;
+    const madrsTotal = payload.madrs_total ?? payload.madrs ?? null;
+    const dev    = payload.deviation === true;
+    const near   = score != null && thr != null && !dev && Number(score) >= 0.85 * Number(thr);
+    const decLabel = questionnaireLabel || (dev ? 'ALERTE DÉTECTÉE' : near ? 'PROCHE DU SEUIL' : 'OK — Normal');
+    const decClass = questionnaireLabel ? 'warn' : (dev ? 'alert' : near ? 'warn' : 'ok');
+    const fillColor= dev ? 'var(--alert)' : near ? 'var(--warn)' : 'var(--ok)';
+    const fillPct  = score != null && thr != null ? Math.min(100, Number(score)/Number(thr)*100).toFixed(1) : 0;
+
+    resultArea.innerHTML = `
+      <div class="result-card">
+        <div class="result-header">
+          <div class="result-decision ${decClass}">${decLabel}</div>
+          <div style="font-size:0.68rem;color:var(--muted)">${new Date().toLocaleTimeString('fr-FR')}</div>
+        </div>
+        <div class="result-body">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.68rem;color:var(--muted);margin-bottom:3px">
+              <span>Score anomalie</span><span>Seuil</span>
+            </div>
+            <div class="score-gauge-bg">
+              <div class="score-gauge-fill" style="width:${fillPct}%;background:${fillColor}"></div>
+              <div class="score-gauge-marker" style="left:100%"></div>
+            </div>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Score anomalie</span>
+            <span class="metric-val">${score != null ? Number(score).toFixed(4) : '—'}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Seuil calibré</span>
+            <span class="metric-val">${thr != null ? Number(thr).toFixed(4) : '—'}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">QC Confiance</span>
+            <span class="metric-val" style="color:${qc!=null?confColor(Number(qc)):'var(--muted)'}">${qc != null ? (Number(qc)*100).toFixed(1)+'%' : '—'}</span>
+          </div>
+          ${ymrsTotal != null ? `<div class="metric-row"><span class="metric-label">YMRS total</span><span class="metric-val">${Number(ymrsTotal)}</span></div>` : ''}
+          ${madrsTotal != null ? `<div class="metric-row"><span class="metric-label">MADRS total</span><span class="metric-val">${Number(madrsTotal)}</span></div>` : ''}
+          ${questionnaireLabel ? `<div class="metric-row"><span class="metric-label">Label clinique</span><span class="metric-val" style="font-size:0.72rem">${questionnaireLabel}</span></div>` : ''}
+          ${payload.consecutive_count != null ? `<div class="metric-row"><span class="metric-label">Sessions consécutives</span><span class="metric-val">${payload.consecutive_count}</span></div>` : ''}
+          ${payload.z_robust != null ? `<div class="metric-row"><span class="metric-label">z robuste</span><span class="metric-val">${Number(payload.z_robust).toFixed(2)}</span></div>` : ''}
+          ${payload.mode ? `<div class="metric-row"><span class="metric-label">Modèle</span><span class="metric-val" style="font-size:0.72rem">${payload.mode}</span></div>` : ''}
+          ${payload.direction_prediction && payload.direction_prediction !== 'direction_incertaine' ? `<div class="metric-row"><span class="metric-label">Direction (DRE)</span><span class="metric-val" style="font-size:0.72rem;color:${payload.direction_prediction==='manic_risk'?'var(--warn)':'var(--accent)'}">${payload.direction_prediction === 'manic_risk' ? '↑ Risque maniaque' : '↓ Risque dépressif'}</span></div>` : ''}
+          ${payload.cusum_value != null ? `<div class="metric-row"><span class="metric-label">CUSUM drift</span><span class="metric-val" style="color:${payload.cusum_alert?'var(--alert)':'var(--muted)'}">${Number(payload.cusum_value).toFixed(3)}${payload.cusum_alert?' ⚠':''}</span></div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // ── Pointer events ──
+  function onDown(evt) {
+    if (sessionLocked) return;
+    drawing = true;
+    mainCanvas.setPointerCapture(evt.pointerId);
+    canvasContainer.classList.add('drawing');
+    pushPoint(evt, true);
+    if (TASKS[currentTaskId].isContinuousTask && !loopTimer) startLoopTimer();
+    redrawMain(); updateCounters();
+  }
+
+  function onMove(evt) {
+    if (!drawing || sessionLocked) return;
+    pushPoint(evt, true);
+    redrawMain();
+    drawMiniTraj(currentRep); drawMiniSpeed(currentRep);
+    updatePhraseProgress(currentRep);
+    renderQCBars(computeQC(currentRep));
+    updateCounters();
+  }
+
+  function onUp(evt) {
+    if (!drawing || sessionLocked) return;
+    drawing = false;
+    pushPoint(evt, false);
+    canvasContainer.classList.remove('drawing');
+    redrawMain();
+    drawMiniTraj(currentRep); drawMiniSpeed(currentRep);
+    updatePhraseProgress(currentRep);
+    renderQCBars(computeQC(currentRep));
+    updateCounters();
+  }
+
+  // ── Listeners ──
+  mainCanvas.addEventListener('pointerdown', onDown);
+  mainCanvas.addEventListener('pointermove', onMove);
+  mainCanvas.addEventListener('pointerup', onUp);
+  mainCanvas.addEventListener('pointercancel', onUp);
+  mainCanvas.addEventListener('pointerleave', evt => { if (drawing) onUp(evt); });
+
+  ymrsEl.addEventListener('input', () => { updateSliders(); refreshJSON(); });
+  madrsEl.addEventListener('input', () => { updateSliders(); refreshJSON(); });
+  [patientIdEl, phaseEl, conditionEl, targetRepsEl].forEach(el => el.addEventListener('input', () => { updateCounters(); updateSendDestinationBadge(); refreshJSON(); }));
+  phaseEl.addEventListener('change', () => {
+    updateSendDestinationBadge();
+    refreshJSON();
+  });
+
+  questionnaireLangEl.addEventListener('change', async () => {
+    setLanguage(activeLang());
+    await loadQuestionnaireCatalog();
+    buildQuestionnaireFlow();
+    applyQuestionnaireLocale();
+    renderCurrentVoiceQuestion();
+    renderPhrasePanel();
+    updateCanvasInstruction();
+    if (questionnaireModal.style.display !== 'none' && questionnaireFlow.length > 0) {
+      questionnaireCursor = Math.min(questionnaireCursor < 0 ? 0 : questionnaireCursor, questionnaireFlow.length - 1);
+      renderQuestionnaireQuestion();
+    }
+    if (recognition) recognition.lang = speechLang();
+    setStatus(tr('langUpdated'), 'ok');
+    refreshJSON();
+  });
+
+  langBtnFr.addEventListener('click', () => {
+    if (questionnaireLangEl.value !== 'fr') {
+      questionnaireLangEl.value = 'fr';
+      questionnaireLangEl.dispatchEvent(new Event('change'));
+    }
+  });
+  langBtnEn.addEventListener('click', () => {
+    if (questionnaireLangEl.value !== 'en') {
+      questionnaireLangEl.value = 'en';
+      questionnaireLangEl.dispatchEvent(new Event('change'));
+    }
+  });
+  langBtnAr.addEventListener('click', () => {
+    if (questionnaireLangEl.value !== 'ar') {
+      questionnaireLangEl.value = 'ar';
+      questionnaireLangEl.dispatchEvent(new Event('change'));
+    }
+  });
+
+  questionnaireBackdrop.addEventListener('click', closeQuestionnaireModal);
+  questionnaireCloseBtn.addEventListener('click', closeQuestionnaireModal);
+
+  questionnaireReplayBtn.addEventListener('click', () => {
+    readCurrentQuestion();
+  });
+
+  questionnaireMicBtn.addEventListener('click', () => {
+    if (!sessionLocked) {
+      questionnaireError.textContent = tr('micLocked');
+      questionnaireError.style.display = 'block';
+      setStatus(tr('micLocked'), 'warn');
+      return;
+    }
+    const rec = ensureRecognition();
+    if (!rec) {
+      questionnaireError.textContent = uiMeta().noSpeech;
+      questionnaireError.style.display = 'block';
+      return;
+    }
+    if (!getCurrentQuestion()) return;
+    if (isListening) return;
+    recognition.lang = speechLang();
+    recognition.start();
+  });
+
+  questionnaireScaleValues.addEventListener('click', (evt) => {
+    const btn = evt.target.closest('button[data-v]');
+    if (!btn) return;
+    const q = getCurrentQuestion();
+    if (!q) return;
+    const val = Number(btn.dataset.v);
+    if (!Number.isFinite(val)) return;
+    setAnswer(q, val);
+    questionnaireError.style.display = 'none';
+    renderQuestionnaireQuestion();
+  });
+
+  questionnaireAnswerInput.addEventListener('input', () => {
+    const q = getCurrentQuestion();
+    if (!q) return;
+    const val = Number(questionnaireAnswerInput.value);
+    if (!Number.isFinite(val)) return;
+    if (val < 0 || val > q.maxScore) return;
+    setAnswer(q, val);
+    questionnaireError.style.display = 'none';
+    renderQuestionnaireQuestion();
+  });
+
+  questionnairePrevBtn.addEventListener('click', () => {
+    if (questionnaireCursor <= 0) return;
+    questionnaireCursor -= 1;
+    renderQuestionnaireQuestion();
+  });
+
+  questionnaireNextBtn.addEventListener('click', () => {
+    const q = getCurrentQuestion();
+    if (!q) return;
+    const hasValue = getAnswer(q) !== undefined;
+    if (!hasValue) {
+      questionnaireError.textContent = uiMeta().fillAll;
+      questionnaireError.style.display = 'block';
+      return;
+    }
+    if (questionnaireCursor < questionnaireFlow.length - 1) {
+      questionnaireCursor += 1;
+      renderQuestionnaireQuestion();
+    }
+  });
+
+  questionnaireValidateBtn.addEventListener('click', async () => {
+    await submitQuestionnaireScores();
+  });
+
+  newRepBtn.addEventListener('click', () => {
+    if (finalizeRep()) {
+      setStatus(`Répétition #${repetitions.length} enregistrée — prête pour la suivante`, 'ok');
+    } else {
+      setStatus('Aucun point capturé — écrivez d\'abord sur le canvas', 'warn');
+    }
+  });
+
+  clearRepBtn.addEventListener('click', () => {
+    if (sessionLocked) return;
+    stopLoopTimer();
+    currentRep = []; repStartT = null;
+    updateCounters(); redrawMain();
+    drawMiniTraj([]); drawMiniSpeed([]);
+    updatePhraseProgress([]);
+    renderQCBars(computeQC([]));
+    setStatus('Répétition en cours effacée','warn');
+  });
+
+  finishBtn.addEventListener('click', () => {
+    stopLoopTimer();
+    if (currentRep.length >= 2) finalizeRep();
+    if (repetitions.length === 0) {
+      setStatus('Impossible de terminer : aucune répétition capturée', 'alert');
+      return;
+    }
+    const v = validateSessionForExport();
+    if (!v.ok) { setStatus(`Contrôle qualité : ${v.message}`, 'warn'); return; }
+    lockSession();
+    refreshJSON();
+    setStatus(`Session terminée — ${repetitions.length} répétition(s) validée(s), export prêt.`, 'ok');
+  });
+
+  resetBtn.addEventListener('click', () => {
+    if (confirm('Démarrer une nouvelle session ? La session actuelle sera perdue.')) resetSession();
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(jsonOutput.value);
+      setStatus('JSON copié ✓','ok');
+    } catch {
+      setStatus('Échec copie — sélectionnez le texte manuellement','warn');
+    }
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    const blob = new Blob([jsonOutput.value], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${sessionIdEl.value||'session'}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    setStatus('Fichier JSON téléchargé ✓','ok');
+  });
+
+  sendBtn.addEventListener('click', async () => {
+    if (!sessionLocked) { setStatus('Terminez et verrouillez la session avant envoi.', 'warn'); return; }
+    const v = validateSessionForExport();
+    if (!v.ok) { setStatus(`Contrôle qualité : ${v.message}`, 'warn'); return; }
+    let payload;
+    try { payload = JSON.parse(jsonOutput.value); }
+    catch { setStatus('JSON invalide','alert'); return; }
+    setStatus('Envoi au pipeline...','info');
+    try {
+      const phase = phaseEl.value;
+      let url;
+      let method = 'POST';
+      if (phase === 'onboarding' || phase === 'baseline') {
+        const pid = (patientIdEl.value || '').trim();
+        url = `${API_BASE}/onboarding/${encodeURIComponent(pid)}/session`;
+      } else {
+        url = `${API_BASE}/score`;
+      }
+      const res = await fetch(url, {
+        method,
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        let detail = '';
+        try {
+          const errPayload = await res.json();
+          detail = errPayload && (errPayload.detail || errPayload.error)
+            ? ` — ${errPayload.detail || errPayload.error}`
+            : '';
+        } catch {
+          // Ignore non-JSON error bodies.
+        }
+        setStatus(`Erreur HTTP ${res.status}${detail}`,'warn');
+        return;
+      }
+      const data = await res.json();
+      renderResult(data);
+
+      // ── Questionnaire conditionnel ─────────────────────────────────────
+      // Baseline S1 → YMRS+MADRS · S2/S3 → ASRM+PHQ9 court
+      // Monitoring alerte J1 → rien · alerte J2+ → DRE d'abord
+      //   DRE confiant → aucun questionnaire
+      //   DRE incertain → ASRM + PHQ-9 court uniquement
+      const qReq = data.questionnaire_required;
+      const needsQuestionnaire = Array.isArray(qReq) && qReq.length > 0;
+
+      if (needsQuestionnaire) {
+        await openQuestionnaireModal(data);
+      }
+
+      // Bandeau alerte J1
+      if (data.alert_j1) {
+        resultArea.insertAdjacentHTML('afterbegin', `
+          <div style="background:var(--warn);color:#000;padding:10px 14px;border-radius:6px;
+                      font-size:0.78rem;font-weight:600;margin-bottom:10px;">
+            ⏰ Déviation J1 — <strong>Revenir le lendemain</strong>.<br>
+            <span style="font-weight:400;font-size:0.72rem">
+              Si confirmée demain : DRE → classification directe si confiant,
+              sinon ASRM + PHQ-9 court.
+            </span>
+          </div>`);
+      }
+
+      // Bandeau alerte confirmée
+      if (data.alert_confirmed) {
+        const dreConfident = !needsQuestionnaire;
+        const dirColor = (data.direction_prediction||'').includes('manic') ? '#D32F2F'
+                       : (data.direction_prediction||'').includes('depressive') ? '#7B1FA2' : '#555';
+        resultArea.insertAdjacentHTML('afterbegin', `
+          <div style="background:${dirColor};color:#fff;padding:10px 14px;border-radius:6px;
+                      font-size:0.78rem;font-weight:600;margin-bottom:10px;">
+            🚨 ALERTE CONFIRMÉE (${data.consecutive_count} déviations consécutives)<br>
+            <span style="font-weight:400;font-size:0.72rem">
+              Direction DRE : <strong>${data.direction_prediction ?? '—'}</strong>
+              · Manie: ${data.score_manie ?? '—'}
+              · Dép: ${data.score_depression ?? '—'}
+              · Conf: ${data.dre_confidence != null ? (data.dre_confidence*100).toFixed(0)+'%' : '—'}<br>
+              ${dreConfident ? '✅ Classification directe — aucun questionnaire.'
+                             : '⚠ DRE incertain → ASRM + PHQ-9 court envoyé.'}
+            </span>
+          </div>`);
+      }
+
+      setStatus('Résultat reçu du pipeline ✓','ok');
+    } catch {
+      setStatus('Backend non connecté (localhost:5000) — lancez app.py du notebook','warn');
+      resultArea.innerHTML = `
+        <div style="padding:14px;font-size:0.78rem;color:var(--muted)">
+          <div style="color:var(--warn);font-weight:600;margin-bottom:8px">⚠ Backend non connecté</div>
+          <div>Attendu : <code style="font-family:var(--mono);color:var(--accent)">${API_BASE}/score</code></div>
+          <div style="margin-top:6px;font-size:0.71rem">Lancez <strong>app.py</strong> (pipeline notebook BridgingBipolar) pour recevoir le scoring.</div>
+          <div style="margin-top:4px;font-size:0.69rem;color:var(--muted)">Onboarding → <code style="font-family:var(--mono)">/onboarding/&lt;patient_id&gt;/session</code><br>Monitoring → <code style="font-family:var(--mono)">/score</code></div>
+        </div>
+      `;
+    }
+  });
+
+  init();
+})();
+
+  // ── Dashboard alertes & admin/locks ──────────────────────────────────────
+  // API_BASE défini dans le scope IIFE ci-dessus — référencer via window si besoin
+  const _API = 'http://localhost:5000';
+  async function loadDashboard() {
+    const panel = document.getElementById('dashboardPanel');
+    const content = document.getElementById('dashboardContent');
+    panel.classList.add('visible');
+    content.innerHTML = '<em>Chargement...</em>';
+
+    try {
+      // Fetch alerts
+      const r = await fetch(`${_API}/dashboard/alerts?days=7`);
+      const d = await r.json();
+
+      // Fetch locks
+      let locksText = '?';
+      try {
+        const rl = await fetch(`${_API}/admin/locks`);
+        const dl = await rl.json();
+        locksText = dl.active_patient_locks ?? '?';
+      } catch {}
+      document.getElementById('locksBadge').textContent = `locks: ${locksText}`;
+
+      if (!d.alerts || d.alerts.length === 0) {
+        content.innerHTML = `<div style="color:var(--ok);font-size:0.82rem;">
+          ✅ Aucune alerte — ${d.total_patients_monitored} patient(s) suivis</div>`;
+        return;
+      }
+
+      const rows = d.alerts.map(a => {
+        const dirClass = a.direction === 'manic_risk' ? 'dir-manic'
+                       : a.direction === 'depressive_risk' ? 'dir-depres' : 'dir-stable';
+        const dirLabel = a.direction === 'manic_risk' ? '↑ Maniaque'
+                       : a.direction === 'depressive_risk' ? '↓ Dépressif' : '● Stable';
+        return `<div class="alert-row">
+          <span style="font-weight:600;">${a.patient_id}</span>
+          <span class="${dirClass}">${dirLabel}</span>
+          <span>score: ${(a.last_score||0).toFixed(4)}</span>
+          <span style="color:var(--warn);">⚠ ${a.n_alerts_in_window} alerte(s)</span>
+        </div>`;
+      }).join('');
+
+      content.innerHTML = `
+        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">
+          ${d.total_alerts} patient(s) en alerte / ${d.total_patients_monitored} suivis
+        </div>
+        ${rows}`;
+    } catch (err) {
+      content.innerHTML = `<em style="color:var(--alert);">Erreur: ${err.message}
+        <br><small>Vérifiez que app.py tourne sur ${_API}</small></em>`;
+    }
+  }
+
+  // Rafraîchir le badge locks toutes les 30s
+  setInterval(async () => {
+    try {
+      const r = await fetch(`${_API}/admin/locks`);
+      const d = await r.json();
+      const el = document.getElementById('locksBadge');
+      if (el) el.textContent = `locks: ${d.active_patient_locks ?? '?'}`;
+    } catch {}
+  }, 30000);
+  </script>
+</body>
+</html>
