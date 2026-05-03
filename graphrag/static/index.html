@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Support assistant</title>
+  <script type="importmap">
+  { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{--bg0:#0a0e14;--bg1:#0f141c;--surface:#151b26;--surface2:#1c2433;--border:rgba(120,152,190,.18);--text:#e8edf5;--text2:#9eb0c8;--accent:#5eb8e8;--radius:16px;--radius-sm:12px;--shadow:0 8px 32px rgba(0,0,0,.35);--font:"DM Sans",system-ui,sans-serif;--font-display:"Outfit",var(--font)}
+    *{box-sizing:border-box}html{height:100%}body{margin:0;min-height:100%;font-family:var(--font);font-size:15px;color:var(--text);background:var(--bg0);background-image:radial-gradient(ellipse 120% 80% at 50% -30%,rgba(94,184,232,.12),transparent 55%),radial-gradient(ellipse 80% 50% at 100% 100%,rgba(100,80,180,.06),transparent 45%)}
+    .hidden{display:none!important}.btn{font:inherit;cursor:pointer;border:none;border-radius:12px;font-weight:600;font-size:.88rem;padding:.65rem 1rem}.btn:disabled{opacity:.45;cursor:not-allowed}
+    .btn-primary{background:linear-gradient(160deg,#6ec4f0 0%,#4a9fd4 100%);color:#061018}.btn-ghost{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}.btn-danger{background:rgba(224,112,112,.18);color:#f0a8a8;border:1px solid rgba(224,112,112,.35)}
+    .auth-wrap{max-width:420px;margin:0 auto;padding:1.25rem .85rem 2rem}.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:1.25rem 1.1rem}
+    .auth-card h1{font-family:var(--font-display);font-size:1.25rem;margin:0 0 .35rem}.auth-card p{margin:0 0 1rem;font-size:.88rem;color:var(--text2)}
+    .field{margin-bottom:.85rem}.field label{display:block;font-size:.78rem;color:var(--text2);margin-bottom:.35rem}.field input{width:100%;padding:.6rem .75rem;border-radius:12px;border:1px solid var(--border);background:var(--bg1);color:var(--text);font:inherit}
+    .auth-toggle{margin-top:.85rem;text-align:center;font-size:.82rem;color:var(--text2)}.auth-toggle .link{background:none;border:none;color:var(--accent);text-decoration:underline;cursor:pointer}.auth-err{margin-top:.65rem;font-size:.82rem;color:#f0a0a0}
+    .avatar-page{min-height:100vh;min-height:100dvh;padding:.65rem;display:flex;flex-direction:column;gap:.5rem}
+    .top-row{display:flex;justify-content:space-between;gap:.75rem}.top-row h1{margin:0;font-family:var(--font-display);font-size:1.1rem}.top-row p{margin:.2rem 0 0;color:var(--text2);font-size:.8rem;max-width:46ch}
+    .notice{display:flex;gap:.65rem;align-items:flex-start;padding:.65rem .85rem;border-radius:var(--radius-sm);background:rgba(28,36,51,.85);border:1px solid var(--border);font-size:.8rem;color:var(--text2)}
+    .avatar-host{flex:1;min-height:360px;border-radius:var(--radius);border:1px solid var(--border);background:radial-gradient(ellipse 80% 70% at 50% 30%,rgba(94,184,232,.12),transparent 60%),var(--surface);overflow:hidden;position:relative}
+    #avatarCanvas{width:100%;height:100%;display:block}
+    .transcript-panel{position:absolute;right:12px;bottom:12px;width:min(360px,calc(100vw - 36px));max-height:42vh;display:flex;flex-direction:column;background:rgba(21,27,38,.92);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+    .transcript-head{padding:.45rem .6rem;font-size:.76rem;color:var(--text2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+    #transcriptList{overflow:auto;padding:.45rem .55rem;display:flex;flex-direction:column;gap:.45rem}
+    .tmsg{font-size:.8rem;border:1px solid var(--border);border-radius:10px;padding:.45rem .55rem;white-space:pre-wrap;background:var(--surface2)}.tmsg.user{border-color:rgba(94,184,232,.45)}
+    .tmsg-photo{white-space:normal}.tmsg-photo .tmsg-label{font-size:.72rem;color:var(--text2);margin-bottom:.25rem}.tmsg-photo .tmsg-note{margin-bottom:.35rem;white-space:pre-wrap;font-size:.8rem;color:var(--text)}
+    .tmsg-photo-img{max-width:100%;max-height:220px;width:auto;height:auto;display:block;border-radius:8px;object-fit:contain;margin-top:.2rem}
+    .controls{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:.5rem}.status{font-size:.82rem;color:var(--text2);min-height:1.2em}.status.err{color:#f0a0a0}.recording{border-color:#e07070!important;color:#ffb4b4!important}
+    @media (max-width:720px){.controls{grid-template-columns:1fr}.transcript-panel{width:calc(100% - 24px);max-height:36vh}}
+  </style>
+</head>
+<body>
+  <div id="viewAuth" class="hidden">
+    <div class="auth-wrap"><div class="auth-card">
+      <h1 id="authTitle">Sign in</h1><p id="authSub">Use your existing account.</p>
+      <div id="authFieldsSignIn">
+        <div class="field"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="username" /></div>
+        <div class="field"><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" /></div>
+      </div>
+      <div id="authFieldsSignUp" class="hidden">
+        <div class="field"><label for="authName2">Name</label><input id="authName2" type="text" autocomplete="name" /></div>
+        <div class="field"><label for="authEmail2">Email</label><input id="authEmail2" type="email" autocomplete="username" /></div>
+        <div class="field"><label for="authPassword2">Password (min 8)</label><input id="authPassword2" type="password" autocomplete="new-password" /></div>
+        <div class="field"><label for="authBirth">Birth date</label><input id="authBirth" type="date" /></div>
+      </div>
+      <button type="button" class="btn btn-primary" id="authPrimary">Sign in</button>
+      <div class="auth-toggle"><span id="authToggleLabel">New here?</span> <button type="button" class="link" id="authToggle">Create an account</button></div>
+      <div class="auth-err" id="authErr" role="alert"></div>
+    </div></div>
+  </div>
+
+  <div id="viewAvatar" class="hidden">
+    <div class="avatar-page">
+      <div class="top-row"><div><h1 id="avatarTitle">Companion</h1><p>Push to talk, then stop to send. You can also send a JPEG, PNG, or WebP photo with an optional note. Replies are spoken and shown in the corner.</p></div><button type="button" class="btn btn-ghost" id="signOutBtn">Sign out</button></div>
+      <div class="notice"><span>Educational only — not medical advice. If you may harm yourself or are in danger, contact emergency services or a clinician right away.</span></div>
+      <div class="avatar-host">
+        <canvas id="avatarCanvas" aria-label="Assistant companion"></canvas>
+        <div class="transcript-panel">
+          <div class="transcript-head"><span>Conversation</span><button id="transcriptToggle" class="btn btn-ghost" style="padding:.2rem .45rem;font-size:.72rem">Hide</button></div>
+          <div id="transcriptList"></div>
+        </div>
+      </div>
+      <div class="controls">
+        <button type="button" class="btn btn-primary" id="recStartBtn">Push to talk — start</button>
+        <button type="button" class="btn btn-danger" id="recStopBtn" disabled>Stop &amp; send</button>
+        <button type="button" class="btn btn-ghost" id="stopSpeakBtn">Stop speaking</button>
+      </div>
+      <div class="photo-row" style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-top:.35rem">
+        <input type="text" id="photoNote" placeholder="Optional note with your photo" maxlength="2000" style="flex:1;min-width:160px;padding:.55rem .7rem;border-radius:12px;border:1px solid var(--border);background:var(--bg1);color:var(--text);font:inherit;font-size:.88rem" autocomplete="off" />
+        <input type="file" id="photoFile" class="hidden" accept="image/jpeg,image/png,image/webp" />
+        <button type="button" class="btn btn-ghost" id="photoPickBtn">Choose photo</button>
+        <button type="button" class="btn btn-primary" id="photoSendBtn" disabled>Send photo</button>
+      </div>
+      <div class="status" id="avatarStatus" role="status"></div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const SESSION_STORAGE_KEY = "graphrag_session_id";
+    const FETCH_OPTS = { credentials: "include" };
+    let authMode = "signin";
+    let sessionId = localStorage.getItem(SESSION_STORAGE_KEY) || "";
+    let avatarApi = null, mediaRecorder = null, chunks = [];
+    let currentAudio = null, audioCtx = null, audioRaf = 0;
+
+    function clearTranscriptPanel(){
+      const list=$("transcriptList");
+      if(!list)return;
+      list.querySelectorAll("img.tmsg-photo-img").forEach((img)=>{try{if(img.src&&img.src.startsWith("blob:"))URL.revokeObjectURL(img.src)}catch(_){}});
+      list.innerHTML="";
+    }
+    function appendUserPhotoTranscript(file,note){
+      const list=$("transcriptList");
+      const wrap=document.createElement("div");
+      wrap.className="tmsg user tmsg-photo";
+      const label=document.createElement("div");
+      label.className="tmsg-label";
+      label.textContent="You:";
+      wrap.appendChild(label);
+      const n=(note||"").trim();
+      if(n){const p=document.createElement("div");p.className="tmsg-note";p.textContent=n;wrap.appendChild(p);}
+      const img=document.createElement("img");
+      img.className="tmsg-photo-img";
+      img.alt="Photo you sent";
+      img.loading="lazy";
+      img.src=URL.createObjectURL(file);
+      wrap.appendChild(img);
+      list.appendChild(wrap);
+      list.scrollTop=list.scrollHeight;
+    }
+
+    function showView(name){$("viewAuth").classList.toggle("hidden",name!=="auth");$("viewAvatar").classList.toggle("hidden",name!=="avatar");}
+    function setAuthErr(msg){$("authErr").textContent = msg || "";}
+    function setStatus(msg,isErr){const el=$("avatarStatus");el.textContent=msg||"";el.classList.toggle("err",!!isErr);}
+    function syncSession(d){const sid=((d&&d.session_id)||"").toString().trim();if(!sid)return;sessionId=sid;localStorage.setItem(SESSION_STORAGE_KEY,sid);}
+    function clearSession(){sessionId="";localStorage.removeItem(SESSION_STORAGE_KEY);}
+    function appendTranscript(role,text){if(!text||!String(text).trim())return;const list=$("transcriptList");const n=document.createElement("div");n.className=`tmsg ${role}`;n.textContent=`${role==="user"?"You":"Assistant"}: ${text}`;list.appendChild(n);list.scrollTop=list.scrollHeight;}
+    async function fetchJson(url,opts){const r=await fetch(url,{...FETCH_OPTS,...opts});const ct=r.headers.get("content-type")||"";if(!r.ok){let d=r.statusText;try{if(ct.includes("json")){const j=await r.json();d=j.detail||JSON.stringify(j)}else d=await r.text()}catch(_){}throw new Error(d||"Request failed")}return ct.includes("json")?r.json():null;}
+    const refreshMe=()=>fetchJson("/api/auth/me",{method:"GET"});
+
+    function renderAuthUi(){const si=authMode==="signin";$("authTitle").textContent=si?"Sign in":"Create account";$("authSub").textContent=si?"Use your existing account.":"Create account with name, email, password and birth date.";$("authFieldsSignIn").classList.toggle("hidden",!si);$("authFieldsSignUp").classList.toggle("hidden",si);$("authPrimary").textContent=si?"Sign in":"Sign up";$("authToggleLabel").textContent=si?"New here?":"Already have an account?";$("authToggle").textContent=si?"Create an account":"Sign in instead";}
+    $("authToggle").onclick=()=>{authMode=authMode==="signin"?"signup":"signin";setAuthErr("");renderAuthUi();};
+    $("authPrimary").onclick=async()=>{setAuthErr("");$("authPrimary").disabled=true;try{if(authMode==="signin"){await fetchJson("/api/auth/signin",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:$("authEmail").value.trim(),password:$("authPassword").value})});}else{await fetchJson("/api/auth/signup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:$("authName2").value.trim(),email:$("authEmail2").value.trim(),password:$("authPassword2").value,birth_date:$("authBirth").value})});}await routeAfterAuth();}catch(e){setAuthErr(String(e.message||e));}finally{$("authPrimary").disabled=false;}};
+
+    function modelCandidatesForMode(mode){if(mode==="under16_avatar_voice")return["/static/models/avatar-under16.glb","/static/models/avatar-under16.gltf","/static/avatar-under16.glb","/static/avatar-under16.gltf"];return["/static/models/avatar-over16.glb","/static/models/avatar-over16.gltf","/static/avatar-over16.glb","/static/avatar-over16.gltf"];}
+    async function initAvatar(mode){if(avatarApi&&avatarApi.dispose){try{avatarApi.dispose()}catch(_){};}avatarApi=null;try{const mod=await import("/static/avatar_scene.mjs");avatarApi=mod.createUnder16Avatar($("avatarCanvas"),{modelCandidates:modelCandidatesForMode(mode)});avatarApi.setMode("idle");}catch(e){setStatus("Could not load avatar scene: "+(e.message||e),true);}}
+
+    function stopSpeech(){try{cancelAnimationFrame(audioRaf)}catch(_){}audioRaf=0;if(currentAudio){try{currentAudio.pause()}catch(_){};try{currentAudio.currentTime=0}catch(_){};currentAudio=null;}if(audioCtx){try{audioCtx.close()}catch(_){};audioCtx=null;}if(avatarApi){avatarApi.setMouth(0);avatarApi.setMode("idle");}}
+    async function playTts(text,lang){if(!avatarApi||!text||!String(text).trim())return;stopSpeech();const r=await fetch("/api/tts",{...FETCH_OPTS,method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,lang:lang||"en"})});if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(j.detail||r.statusText);}const blob=await r.blob();const url=URL.createObjectURL(blob);const audio=new Audio(url);currentAudio=audio;try{const AC=window.AudioContext||window.webkitAudioContext;const ctx=new AC();audioCtx=ctx;const source=ctx.createMediaElementSource(audio);const analyser=ctx.createAnalyser();analyser.fftSize=256;source.connect(analyser);analyser.connect(ctx.destination);const buf=new Uint8Array(analyser.fftSize);const tick=()=>{if(!currentAudio||currentAudio.paused||currentAudio.ended)return;analyser.getByteTimeDomainData(buf);let sum=0;for(let i=0;i<buf.length;i++){const v=(buf[i]-128)/128;sum+=v*v;}const rms=Math.sqrt(sum/buf.length);avatarApi.setMouth(Math.min(1,rms*7));audioRaf=requestAnimationFrame(tick);};avatarApi.setMode("speak");audio.addEventListener("ended",()=>{stopSpeech();URL.revokeObjectURL(url);});await audio.play();tick();}catch(_){avatarApi.setMode("speak");audio.onended=()=>{stopSpeech();URL.revokeObjectURL(url)};await audio.play().catch(()=>{});}}
+
+    async function routeAfterAuth(){const me=await refreshMe();if(!me||!me.authenticated){showView("auth");return;}clearTranscriptPanel();showView("avatar");$("avatarTitle").textContent=me.is_under_16?"Companion (Under 16)":"Companion (16+)";await initAvatar(me.experience_mode);}
+    async function signOut(){try{await fetchJson("/api/auth/signout",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"})}catch(_){}stopSpeech();clearTranscriptPanel();clearSession();showView("auth");renderAuthUi();}
+    $("signOutBtn").onclick=signOut;
+
+    $("recStartBtn").onclick=async()=>{chunks=[];setStatus("Allow microphone access if asked.");stopSpeech();if(avatarApi)avatarApi.setMode("listen");try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const mime=MediaRecorder.isTypeSupported("audio/webm;codecs=opus")?"audio/webm;codecs=opus":"audio/webm";mediaRecorder=new MediaRecorder(stream,{mimeType:mime});mediaRecorder.ondataavailable=(ev)=>{if(ev.data.size>0)chunks.push(ev.data)};mediaRecorder.onstop=()=>stream.getTracks().forEach((t)=>t.stop());mediaRecorder.start();$("recStartBtn").disabled=true;$("recStartBtn").classList.add("recording");$("recStopBtn").disabled=false;setStatus("Listening... tap Stop & send when done.");}catch(e){setStatus("Microphone: "+(e.message||e),true);if(avatarApi)avatarApi.setMode("idle");}};
+    $("recStopBtn").onclick=async()=>{if(!mediaRecorder||mediaRecorder.state==="inactive")return;$("recStartBtn").classList.remove("recording");setStatus("Sending voice...");mediaRecorder.stop();$("recStartBtn").disabled=false;$("recStopBtn").disabled=true;await new Promise((r)=>setTimeout(r,150));const blob=new Blob(chunks,{type:chunks[0]?.type||"audio/webm"});chunks=[];const fd=new FormData();fd.append("file",blob,"recording.webm");try{const query=new URLSearchParams({session_id:sessionId||""});const r=await fetch("/api/chat/audio?"+query.toString(),{...FETCH_OPTS,method:"POST",body:fd});const ct=r.headers.get("content-type")||"";if(!r.ok){let d=r.statusText;try{if(ct.includes("json")){const j=await r.json();d=j.detail||JSON.stringify(j)}else d=await r.text()}catch(_){}throw new Error(d||"Request failed")}const data=await r.json();syncSession(data);appendTranscript("user",(data.transcript||"").trim()||"(voice)");appendTranscript("assistant",data.answer||"");setStatus("");await playTts(data.answer||"",data.lang||"en");}catch(e){setStatus(String(e.message||e),true);if(avatarApi)avatarApi.setMode("idle");}};
+    $("photoPickBtn").onclick=()=>{$("photoFile").click();};
+    $("photoFile").onchange=()=>{$("photoSendBtn").disabled=!($("photoFile").files&&$("photoFile").files.length);};
+    $("photoSendBtn").onclick=async()=>{const inp=$("photoFile");const f=inp.files&&inp.files[0];if(!f)return;stopSpeech();if(avatarApi)avatarApi.setMode("listen");const fd=new FormData();fd.append("file",f);const note=($("photoNote").value||"").trim();if(note)fd.append("message",note);const fileForPreview=f;setStatus("Sending photo…");$("photoSendBtn").disabled=true;try{const query=new URLSearchParams({session_id:sessionId||""});const r=await fetch("/api/chat/image?"+query.toString(),{...FETCH_OPTS,method:"POST",body:fd});const ct=r.headers.get("content-type")||"";if(!r.ok){let d=r.statusText;try{if(ct.includes("json")){const j=await r.json();d=j.detail||JSON.stringify(j)}else d=await r.text()}catch(_){}throw new Error(d||"Request failed")}const data=await r.json();syncSession(data);appendUserPhotoTranscript(fileForPreview,note);appendTranscript("assistant",data.answer||"");setStatus("");inp.value="";$("photoSendBtn").disabled=true;if(avatarApi)avatarApi.setMode("idle");await playTts(data.answer||"",data.lang||"en");}catch(e){setStatus(String(e.message||e),true);if(avatarApi)avatarApi.setMode("idle");$("photoSendBtn").disabled=!(!inp.files||!inp.files.length);}};
+    $("stopSpeakBtn").onclick=()=>{stopSpeech();setStatus("Speech stopped.");};
+    $("transcriptToggle").onclick=()=>{const list=$("transcriptList");const hidden=list.style.display==="none";list.style.display=hidden?"flex":"none";$("transcriptToggle").textContent=hidden?"Hide":"Show";};
+
+    async function boot(){renderAuthUi();const me=await refreshMe().catch(()=>({authenticated:false}));if(!me||!me.authenticated){showView("auth");return;}await routeAfterAuth();}
+    boot();
+  </script>
+</body>
+</html>

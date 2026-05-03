@@ -1,0 +1,18 @@
+[
+  {
+    "question": "What are the main symptoms of mania?",
+    "ground_truth": "Mania involves elevated or irritable mood, increased energy and activity, decreased need for sleep, rapid speech, flight of ideas, distractibility, increased goal-directed activity, grandiosity, and risky behaviors such as impulsive spending or unsafe sex."
+  },
+  {
+    "question": "How is bipolar II disorder diagnosed?",
+    "ground_truth": "Bipolar II requires a history of at least one hypomanic episode and at least one major depressive episode. A prior full manic episode rules out Bipolar II in favor of Bipolar I."
+  },
+  {
+    "question": "Quels traitements stabilisent l'humeur dans le trouble bipolaire ?",
+    "ground_truth": "Le lithium, les anticonvulsivants comme le valproate, et des antipsychotiques comme l'olanzapine ou la quétiapine sont utilisés pour traiter la manie ou prévenir les rechutes; un suivi biologique est nécessaire avec le lithium."
+  },
+  {
+    "question": "What are common triggers for bipolar mood episodes?",
+    "ground_truth": "Episodes can be triggered by stress, sleep deprivation, major life changes, and childhood trauma. Additional triggers include disruptions in daily routine, substance use, and certain medication side effects."
+  }
+]
