@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+python-multipart
+numpy
+pandas
+librosa
+soundfile
+opencv-python-headless
+tensorflow
+torch
+transformers
+scikit-learn
+matplotlib
+
