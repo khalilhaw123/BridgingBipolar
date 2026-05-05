@@ -216,3 +216,4 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+integration_kh/models/wav2vec2-emotion_final/model.safetensors
